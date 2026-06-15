@@ -1,5 +1,6 @@
 #include "agent_config.h"
 #include <nlohmann/json.hpp>
+#include "persistence.h"
 
 AgentConfig& agentConfig()
 {
@@ -58,4 +59,10 @@ std::string AgentConfig::get(const std::string& key) const
     if (key == "wallet_account_hex") return wallet_account_hex;
     if (key == "heartbeat_interval") return std::to_string(heartbeat_interval);
     return "";
+}
+
+void AgentConfig::save() const
+{
+    agent_persistence::saveJsonFile(agent_persistence::configPath(),
+                                    nlohmann::json::parse(toJson()));
 }

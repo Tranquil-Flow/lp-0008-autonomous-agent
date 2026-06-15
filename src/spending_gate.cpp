@@ -71,8 +71,7 @@ void SpendingGate::loadPersistedLocked() const
     if (loaded_) return;
     records_.clear();
     auto data = agent_persistence::loadJsonFile(
-        agent_persistence::spendHistoryPath(),
-        nlohmann::json{{"records", nlohmann::json::array()}}
+        agent_persistence::spendHistoryPath()
     );
     if (data.contains("records") && data["records"].is_array()) {
         for (const auto& item : data["records"]) {

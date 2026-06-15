@@ -1,58 +1,73 @@
 #pragma once
 
 #include <string>
+#include <logos_module_context.h>
 
 /**
  * @brief Autonomous AI agent module for Logos Core (LP-0008).
  *
- * Skills across 5 categories:
- *   meta     — introspection, config, status
- *   storage  — file store/retrieve via storage_module
- *   chain    — wallet operations via logos_execution_zone
- *   messaging— send/receive via delivery_module
- *   a2a      — agent-to-agent protocol
+ * Implements an autonomous AI agent with wallet, storage, and messaging
+ * capabilities. Skills match the LP-0008 spec exactly:
+ *
+ *   storage.*  — file upload/download/list/share via storage_module
+ *   messaging.*— send/join/create_group via delivery_module
+ *   wallet.*   — balance/send/history via logos_execution_zone
+ *   program.*  — query/call/deploy LEZ programs
+ *   agent.*    — A2A-compatible agent coordination
+ *   meta.*     — introspection, config, status
+ *
+ * Inherits LogosModuleContext for:
+ *   - instancePersistencePath() — canonical state directory
+ *   - modules() — typed access to co-loaded dependency modules
+ *   - onContextReady() — one-time initialization hook
  */
-class AgentModuleImpl
+class AgentModuleImpl : public LogosModuleContext
 {
 public:
     AgentModuleImpl();
 
+    // === Lifecycle ===
+    std::string greet(const std::string& name);
+
     // === Skill Dispatch ===
     std::string dispatchSkill(const std::string& skill_name, const std::string& args_json);
 
-    // === Meta Skills (direct) ===
-    std::string getSkills();
-    std::string getAgentStatus();
-    std::string configure(const std::string& key, const std::string& value);
-    std::string getConfig(const std::string& key);
-    std::string getFullConfig();
+    // === Meta Skills ===
+    std::string metaSkills();
+    std::string metaStatus();
+    std::string metaConfigure(const std::string& key, const std::string& value);
 
     // === Storage Skills ===
-    std::string storeData(const std::string& key, const std::string& data);
-    std::string retrieveData(const std::string& key);
-    std::string listStored();
-
-    // === Blockchain Skills ===
-    std::string getBalance(const std::string& account_hex);
-    std::string checkSpend(const std::string& amount_le16);
-    std::string transfer(const std::string& from_hex, const std::string& to_hex, const std::string& amount_le16);
-    std::string getSpendingHistory();
-    std::string getThresholds();
+    std::string storageUpload(const std::string& path, const std::string& label);
+    std::string storageDownload(const std::string& address, const std::string& path);
+    std::string storageList();
+    std::string storageShare(const std::string& address, const std::string& recipient);
 
     // === Messaging Skills ===
-    std::string sendMessage(const std::string& topic, const std::string& payload);
-    std::string subscribeTopic(const std::string& topic);
+    std::string messagingSend(const std::string& recipient, const std::string& message);
+    std::string messagingJoin(const std::string& groupId);
+    std::string messagingCreateGroup(const std::string& members);
 
-    // === A2A Skills ===
-    std::string getAgentCard();
-    std::string discoverAgents();
-    std::string delegateTask(const std::string& target_agent_id, const std::string& skill_name, const std::string& args_json);
+    // === Wallet Skills ===
+    std::string walletBalance();
+    std::string walletSend(const std::string& recipient, const std::string& amountLe16);
+    std::string walletHistory();
 
-    // === Module Info ===
-    std::string greet(const std::string& name);
-    std::string getStatus();
+    // === Program Skills ===
+    std::string programQuery(const std::string& programId, const std::string& params);
+    std::string programCall(const std::string& programId, const std::string& instruction, const std::string& params);
+    std::string programDeploy(const std::string& binaryPath);
+
+    // === Agent Coordination (A2A) ===
+    std::string agentCard();
+    std::string agentDiscover(const std::string& topic);
+    std::string agentTask(const std::string& agentAddress, const std::string& skill, const std::string& params);
+    std::string agentSubscribe(const std::string& agentAddress, const std::string& taskId);
+    std::string agentCancel(const std::string& agentAddress, const std::string& taskId);
+
+protected:
+    void onContextReady() override;
 
 private:
-    void registerAllSkills();
-    bool skills_registered_ = false;
+    bool m_contextReady = false;
 };

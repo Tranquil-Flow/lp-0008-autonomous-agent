@@ -13,6 +13,18 @@ void SkillRegistry::registerSkill(const std::string& name,
     };
 }
 
+void SkillRegistry::addMeta(const std::string& name,
+                             const std::string& category,
+                             const std::string& description,
+                             const std::string& input_schema,
+                             const std::string& output_schema)
+{
+    skills_[name] = Entry{
+        Skill{name, category, description, input_schema, output_schema},
+        nullptr  // no handler — dispatch handled by caller
+    };
+}
+
 std::string SkillRegistry::dispatch(const std::string& skill_name, const std::string& args_json) const
 {
     auto it = skills_.find(skill_name);
@@ -62,4 +74,11 @@ bool SkillRegistry::hasSkill(const std::string& name) const
 size_t SkillRegistry::count() const
 {
     return skills_.size();
+}
+
+// Global registry instance (module is single-instance)
+SkillRegistry& g_registry()
+{
+    static SkillRegistry instance;
+    return instance;
 }

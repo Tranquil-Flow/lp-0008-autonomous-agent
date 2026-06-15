@@ -8,71 +8,55 @@ namespace fs = std::filesystem;
 
 namespace agent_persistence {
 
+static std::string g_overrideDir;
+
+void overrideStateDir(const std::string& dir)
+{
+    g_overrideDir = dir;
+}
+
 std::string stateDir()
 {
+    if (!g_overrideDir.empty()) return g_overrideDir;
     const char* env = std::getenv("AGENT_MODULE_STATE_DIR");
-    if (env && *env) return std::string(env);
-    return "/tmp/logos-agent-module-state";
+    if (env && *env) return env;
+    return fs::current_path().string() + "/.agent-state";
 }
 
-std::string storagePath()
+static std::string ensureDir()
 {
-    return stateDir() + "/storage.json";
+    auto dir = stateDir();
+    fs::create_directories(dir);
+    return dir;
 }
 
-std::string spendHistoryPath()
-{
-    return stateDir() + "/spend_history.json";
-}
+std::string storagePath()     { return ensureDir() + "/storage.json"; }
+std::string spendHistoryPath(){ return ensureDir() + "/spend_history.json"; }
+std::string walletPath()      { return ensureDir() + "/wallet.json"; }
+std::string messagesPath()    { return ensureDir() + "/messages.json"; }
+std::string groupsPath()      { return ensureDir() + "/groups.json"; }
+std::string discoveryPath()   { return ensureDir() + "/discovery.json"; }
+std::string tasksPath()       { return ensureDir() + "/tasks.json"; }
+std::string configPath()      { return ensureDir() + "/config.json"; }
 
-nlohmann::json loadJsonFile(const std::string& path, const nlohmann::json& fallback)
+nlohmann::json loadJsonFile(const std::string& path)
 {
-    std::ifstream in(path);
-    if (!in.good()) return fallback;
-
-    nlohmann::json parsed = nlohmann::json::parse(in, nullptr, false);
-    if (parsed.is_discarded()) return fallback;
-    return parsed;
-}
-
-bool saveJsonFile(const std::string& path, const nlohmann::json& value, std::string* error)
-{
+    std::ifstream ifs(path);
+    if (!ifs.is_open()) return nlohmann::json{};
     try {
-        fs::create_directories(fs::path(path).parent_path());
-        const std::string tmp = path + ".tmp";
-        {
-            std::ofstream out(tmp, std::ios::trunc);
-            if (!out.good()) {
-                if (error) *error = "failed_to_open_temp_file";
-                return false;
-            }
-            out << value.dump(2) << "\n";
-        }
-        fs::rename(tmp, path);
-        return true;
-    } catch (const std::exception& e) {
-        if (error) *error = e.what();
-        return false;
+        nlohmann::json j;
+        ifs >> j;
+        return j;
+    } catch (...) {
+        return nlohmann::json{};
     }
 }
 
-nlohmann::json loadStorage()
+void saveJsonFile(const std::string& path, const nlohmann::json& data)
 {
-    nlohmann::json fallback;
-    fallback["entries"] = nlohmann::json::object();
-    return loadJsonFile(storagePath(), fallback);
-}
-
-bool saveStorage(const nlohmann::json& storage, std::string* error)
-{
-    return saveJsonFile(storagePath(), storage, error);
-}
-
-void resetDemoState()
-{
-    std::error_code ec;
-    fs::remove(storagePath(), ec);
-    fs::remove(spendHistoryPath(), ec);
+    fs::create_directories(fs::path(path).parent_path());
+    std::ofstream ofs(path);
+    ofs << data.dump(2);
 }
 
 } // namespace agent_persistence

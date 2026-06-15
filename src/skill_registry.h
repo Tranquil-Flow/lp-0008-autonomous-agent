@@ -31,6 +31,13 @@ public:
                        const std::string& output_schema,
                        SkillHandler handler);
 
+    /// Register skill metadata only (no handler — dispatch handled elsewhere).
+    void addMeta(const std::string& name,
+                 const std::string& category,
+                 const std::string& description,
+                 const std::string& input_schema,
+                 const std::string& output_schema);
+
     /// Dispatch a skill by name. Returns JSON result or error JSON.
     std::string dispatch(const std::string& skill_name, const std::string& args_json) const;
 
@@ -50,3 +57,6 @@ private:
     };
     std::map<std::string, Entry> skills_;
 };
+
+// Global registry accessor (module is single-instance by design)
+SkillRegistry& g_registry();

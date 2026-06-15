@@ -6,3 +6,4 @@ logoscore-latest
 *.so
 *.lgx
 
+tests/__pycache__/

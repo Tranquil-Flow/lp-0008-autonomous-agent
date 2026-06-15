@@ -40,6 +40,9 @@ struct AgentConfig {
     /// Get a single config value by key.
     std::string get(const std::string& key) const;
 
+    /// Persist config to disk.
+    void save() const;
+
 private:
     mutable std::mutex mutex_;
 };
