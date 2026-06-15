@@ -57,6 +57,41 @@ void AgentModuleImpl::onContextReady()
     if (!p.empty()) {
         agent_persistence::overrideStateDir(p);
     }
+    // Lazily create inter-module clients for storage_module and delivery_module.
+    // These succeed if the host co-loaded those modules; calls gracefully fail
+    // (returning null) when the target is absent, and we fall back to simulated.
+    try {
+        m_storageClient = std::make_unique<logos::LpClient>("storage_module", "agent_module");
+    } catch (...) { m_storageClient.reset(); }
+    try {
+        m_deliveryClient = std::make_unique<logos::LpClient>("delivery_module", "agent_module");
+    } catch (...) { m_deliveryClient.reset(); }
+}
+
+// ─── Inter-Module Call Helpers ──────────────────────────────────────────────
+
+bool AgentModuleImpl::tryStorageCall(const std::string& method, const json& args, json& out)
+{
+    if (!m_storageClient) return false;
+    logos::CallError err;
+    auto result = m_storageClient->invoke(method, args, &err);
+    if (err.code.empty() && !result.is_null()) {
+        out = std::move(result);
+        return true;
+    }
+    return false;
+}
+
+bool AgentModuleImpl::tryDeliveryCall(const std::string& method, const json& args, json& out)
+{
+    if (!m_deliveryClient) return false;
+    logos::CallError err;
+    auto result = m_deliveryClient->invoke(method, args, &err);
+    if (err.code.empty() && !result.is_null()) {
+        out = std::move(result);
+        return true;
+    }
+    return false;
 }
 
 std::string AgentModuleImpl::greet(const std::string& name)
@@ -147,6 +182,12 @@ std::string AgentModuleImpl::metaStatus()
         r["storage_items"] = 0;
     }
 
+    // Module connectivity
+    json modules_status;
+    modules_status["storage_module"] = (m_storageClient != nullptr) ? "connected" : "not_loaded";
+    modules_status["delivery_module"] = (m_deliveryClient != nullptr) ? "connected" : "not_loaded";
+    r["modules"] = modules_status;
+
     // Active tasks
     r["active_tasks"] = 0;
 
@@ -189,11 +230,36 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
     }
     std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
-    // Generate content address (simple hash for demo)
+    // Try real storage_module upload pipeline
+    json realResult;
+    if (tryStorageCall("uploadInit", json::array({path, label}), realResult)) {
+        // Real upload succeeded — store CID in registry
+        auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
+        if (!data.is_object()) data = json::object();
+        json entry;
+        entry["label"] = label;
+        entry["address"] = realResult.value("cid", realResult.value("address", ""));
+        entry["size"] = content.size();
+        entry["path"] = path;
+        entry["backend"] = "storage_module";
+        data[label] = entry;
+        agent_persistence::saveJsonFile(agent_persistence::storagePath(), data);
+
+        json r;
+        r["address"] = entry["address"];
+        r["label"] = label;
+        r["size"] = content.size();
+        r["backend"] = "storage_module";
+        r["stored"] = true;
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: local file persistence (simulated)
+    // Generate content address (simple hash)
     size_t hash = std::hash<std::string>{}(content);
     std::string address = "0x" + std::to_string(hash);
 
-    // Store in registry
     auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
     if (!data.is_object()) data = json::object();
 
@@ -202,6 +268,7 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
     entry["address"] = address;
     entry["size"] = content.size();
     entry["path"] = path;
+    entry["backend"] = "file";
     data[label] = entry;
 
     agent_persistence::saveJsonFile(agent_persistence::storagePath(), data);
@@ -212,6 +279,7 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
     r["size"] = content.size();
     r["backend"] = "file";
     r["stored"] = true;
+    r["mode"] = "simulated";
     return r.dump();
 }
 
@@ -231,6 +299,20 @@ std::string AgentModuleImpl::storageDownload(const std::string& address, const s
         }
     }
 
+    // Try real storage_module fetch
+    json realResult;
+    if (tryStorageCall("fetch", json::array({address}), realResult)) {
+        json r;
+        r["address"] = address;
+        r["label"] = label;
+        r["path"] = path;
+        r["downloaded"] = true;
+        r["backend"] = "storage_module";
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: local file copy (simulated)
     json r;
     if (sourcePath.empty()) {
         r["error"] = "address_not_found";
@@ -245,11 +327,24 @@ std::string AgentModuleImpl::storageDownload(const std::string& address, const s
     r["label"] = label;
     r["path"] = path;
     r["downloaded"] = true;
+    r["mode"] = "simulated";
     return r.dump();
 }
 
 std::string AgentModuleImpl::storageList()
 {
+    // Try real storage_module manifests
+    json realResult;
+    if (tryStorageCall("manifests", json::array(), realResult)) {
+        json r;
+        r["files"] = realResult;
+        r["count"] = realResult.size();
+        r["backend"] = "storage_module";
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: local registry
     auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
     if (!data.is_object()) data = json::object();
 
@@ -265,6 +360,7 @@ std::string AgentModuleImpl::storageList()
     r["files"] = files;
     r["count"] = files.size();
     r["backend"] = "file";
+    r["mode"] = "simulated";
     return r.dump();
 }
 
@@ -300,7 +396,18 @@ std::string AgentModuleImpl::storageShare(const std::string& address, const std:
 
 std::string AgentModuleImpl::messagingSend(const std::string& recipient, const std::string& message)
 {
-    // Record in message log
+    // Try real delivery_module send
+    json realResult;
+    if (tryDeliveryCall("send", json::array({recipient, message}), realResult)) {
+        json r;
+        r["sent"] = true;
+        r["recipient"] = recipient;
+        r["message_id"] = realResult.value("id", realResult.value("message_id", ""));
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: record in message log (simulated)
     auto data = agent_persistence::loadJsonFile(agent_persistence::messagesPath());
     if (!data.is_array()) data = json::array();
 
@@ -318,12 +425,23 @@ std::string AgentModuleImpl::messagingSend(const std::string& recipient, const s
     r["sent"] = true;
     r["recipient"] = recipient;
     r["message_id"] = "msg-" + std::to_string(data.size());
+    r["mode"] = "simulated";
     return r.dump();
 }
 
 std::string AgentModuleImpl::messagingJoin(const std::string& groupId)
 {
-    // Record in joined groups
+    // Try real delivery_module join
+    json realResult;
+    if (tryDeliveryCall("join", json::array({groupId}), realResult)) {
+        json r;
+        r["joined"] = true;
+        r["group_id"] = groupId;
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: record in joined groups (simulated)
     auto data = agent_persistence::loadJsonFile(agent_persistence::groupsPath());
     if (!data.is_array()) data = json::array();
 
@@ -333,6 +451,7 @@ std::string AgentModuleImpl::messagingJoin(const std::string& groupId)
     json r;
     r["joined"] = true;
     r["group_id"] = groupId;
+    r["mode"] = "simulated";
     return r.dump();
 }
 
@@ -346,7 +465,18 @@ std::string AgentModuleImpl::messagingCreateGroup(const std::string& members)
         memberList = json::array({members});
     }
 
-    // Generate group ID
+    // Try real delivery_module create_group
+    json realResult;
+    if (tryDeliveryCall("createGroup", json::array({members}), realResult)) {
+        json r;
+        r["group_id"] = realResult.value("group_id", realResult.value("id", ""));
+        r["members"] = memberList;
+        r["created"] = true;
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: generate group ID locally (simulated)
     size_t hash = std::hash<std::string>{}(members + std::to_string(
         std::chrono::duration_cast<std::chrono::seconds>(
             std::chrono::system_clock::now().time_since_epoch()).count()));
@@ -367,6 +497,7 @@ std::string AgentModuleImpl::messagingCreateGroup(const std::string& members)
     r["group_id"] = groupId;
     r["members"] = memberList;
     r["created"] = true;
+    r["mode"] = "simulated";
     return r.dump();
 }
 

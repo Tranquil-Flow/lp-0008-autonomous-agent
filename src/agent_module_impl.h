@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <memory>
 #include <logos_module_context.h>
+#include <logos_lp_client.h>   // logos::LpClient — inter-module calls
 
 /**
  * @brief Autonomous AI agent module for Logos Core (LP-0008).
@@ -20,6 +22,10 @@
  *   - instancePersistencePath() — canonical state directory
  *   - modules() — typed access to co-loaded dependency modules
  *   - onContextReady() — one-time initialization hook
+ *
+ * Uses logos::LpClient for direct inter-module calls to storage_module
+ * and delivery_module when they are co-loaded. Falls back to simulated
+ * mode when sibling modules are not available.
  */
 class AgentModuleImpl : public LogosModuleContext
 {
@@ -70,4 +76,12 @@ protected:
 
 private:
     bool m_contextReady = false;
+
+    // Inter-module clients (lazy-init in onContextReady)
+    std::unique_ptr<logos::LpClient> m_storageClient;   // → storage_module
+    std::unique_ptr<logos::LpClient> m_deliveryClient;  // → delivery_module
+
+    // Helpers
+    bool tryStorageCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);
+    bool tryDeliveryCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);
 };
