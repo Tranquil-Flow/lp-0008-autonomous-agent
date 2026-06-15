@@ -76,12 +76,16 @@ protected:
 
 private:
     bool m_contextReady = false;
+    bool m_storageReady = false;
+    bool m_deliveryReady = false;
 
     // Inter-module clients (lazy-init in onContextReady)
     std::unique_ptr<logos::LpClient> m_storageClient;   // → storage_module
     std::unique_ptr<logos::LpClient> m_deliveryClient;  // → delivery_module
 
     // Helpers
+    bool ensureStorageReady();
+    bool ensureDeliveryReady();
     bool tryStorageCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);
     bool tryDeliveryCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);
 };

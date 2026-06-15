@@ -57,39 +57,89 @@ void AgentModuleImpl::onContextReady()
     if (!p.empty()) {
         agent_persistence::overrideStateDir(p);
     }
-    // Lazily create inter-module clients for storage_module and delivery_module.
-    // These succeed if the host co-loaded those modules; calls gracefully fail
-    // (returning null) when the target is absent, and we fall back to simulated.
-    try {
-        m_storageClient = std::make_unique<logos::LpClient>("storage_module", "agent_module");
-    } catch (...) { m_storageClient.reset(); }
-    try {
-        m_deliveryClient = std::make_unique<logos::LpClient>("delivery_module", "agent_module");
-    } catch (...) { m_deliveryClient.reset(); }
 }
 
 // ─── Inter-Module Call Helpers ──────────────────────────────────────────────
 
+bool AgentModuleImpl::ensureStorageReady()
+{
+    if (m_storageReady) return true;
+
+    json initResult;
+    const auto basePath = instancePersistencePath().empty()
+        ? fs::temp_directory_path() / "logos-agent-storage"
+        : fs::path(instancePersistencePath()) / "storage_module_live";
+    fs::create_directories(basePath);
+
+    json cfg;
+    cfg["data-dir"] = basePath.string();
+    if (!tryStorageCall("init", json::array({cfg.dump()}), initResult)) {
+        return false;
+    }
+
+    json startResult;
+    m_storageReady = tryStorageCall("start", json::array(), startResult);
+    return m_storageReady;
+}
+
+bool AgentModuleImpl::ensureDeliveryReady()
+{
+    if (m_deliveryReady) return true;
+
+    // Minimal config mirrored from delivery_module's own real integration tests:
+    // Edge mode, local relay/sharding, no external peers required.
+    json cfg;
+    cfg["logLevel"] = "INFO";
+    cfg["mode"] = "Edge";
+    cfg["relay"] = true;
+    cfg["numShardsInNetwork"] = 8;
+
+    json createResult;
+    if (!tryDeliveryCall("createNode", json::array({cfg.dump()}), createResult)) {
+        return false;
+    }
+
+    json startResult;
+    m_deliveryReady = tryDeliveryCall("start", json::array(), startResult);
+    return m_deliveryReady;
+}
+
 bool AgentModuleImpl::tryStorageCall(const std::string& method, const json& args, json& out)
 {
-    if (!m_storageClient) return false;
+    if (!m_contextReady) return false;
+    if (!m_storageClient) {
+        try {
+            m_storageClient = std::make_unique<logos::LpClient>("storage_module", "agent_module");
+        } catch (...) {
+            m_storageClient.reset();
+            return false;
+        }
+    }
     logos::CallError err;
     auto result = m_storageClient->invoke(method, args, &err);
     if (err.code.empty() && !result.is_null()) {
         out = std::move(result);
-        return true;
+        return !out.is_object() || !out.contains("success") || out.value("success", false);
     }
     return false;
 }
 
 bool AgentModuleImpl::tryDeliveryCall(const std::string& method, const json& args, json& out)
 {
-    if (!m_deliveryClient) return false;
+    if (!m_contextReady) return false;
+    if (!m_deliveryClient) {
+        try {
+            m_deliveryClient = std::make_unique<logos::LpClient>("delivery_module", "agent_module");
+        } catch (...) {
+            m_deliveryClient.reset();
+            return false;
+        }
+    }
     logos::CallError err;
     auto result = m_deliveryClient->invoke(method, args, &err);
     if (err.code.empty() && !result.is_null()) {
         out = std::move(result);
-        return true;
+        return !out.is_object() || !out.contains("success") || out.value("success", false);
     }
     return false;
 }
@@ -230,18 +280,22 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
     }
     std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
-    // Try real storage_module upload pipeline
+    // Try real storage_module upload pipeline. The current storage module exposes
+    // uploadInit(QString) and uploadInit(QString,int), not a label-bearing
+    // overload; keep the user's label in our registry metadata.
     json realResult;
-    if (tryStorageCall("uploadInit", json::array({path, label}), realResult)) {
-        // Real upload succeeded — store CID in registry
+    if (ensureStorageReady() && tryStorageCall("uploadInit", json::array({path}), realResult)) {
+        // Real upload succeeded — store CID in registry.
         auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
         if (!data.is_object()) data = json::object();
         json entry;
         entry["label"] = label;
-        entry["address"] = realResult.value("cid", realResult.value("address", ""));
+        entry["address"] = realResult.value("cid", realResult.value("address",
+            realResult.value("sessionId", realResult.value("value", ""))));
         entry["size"] = content.size();
         entry["path"] = path;
         entry["backend"] = "storage_module";
+        entry["storage_result"] = realResult;
         data[label] = entry;
         agent_persistence::saveJsonFile(agent_persistence::storagePath(), data);
 
@@ -252,6 +306,7 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
         r["backend"] = "storage_module";
         r["stored"] = true;
         r["mode"] = "live";
+        r["storage_result"] = realResult;
         return r.dump();
     }
 
@@ -301,7 +356,7 @@ std::string AgentModuleImpl::storageDownload(const std::string& address, const s
 
     // Try real storage_module fetch
     json realResult;
-    if (tryStorageCall("fetch", json::array({address}), realResult)) {
+    if (ensureStorageReady() && tryStorageCall("fetch", json::array({address}), realResult)) {
         json r;
         r["address"] = address;
         r["label"] = label;
@@ -335,10 +390,14 @@ std::string AgentModuleImpl::storageList()
 {
     // Try real storage_module manifests
     json realResult;
-    if (tryStorageCall("manifests", json::array(), realResult)) {
+    if (ensureStorageReady() && tryStorageCall("manifests", json::array(), realResult)) {
+        const json files = (realResult.is_object() && realResult.contains("value"))
+            ? realResult["value"]
+            : realResult;
         json r;
-        r["files"] = realResult;
-        r["count"] = realResult.size();
+        r["files"] = files;
+        r["count"] = files.size();
+        r["storage_result"] = realResult;
         r["backend"] = "storage_module";
         r["mode"] = "live";
         return r.dump();
@@ -398,12 +457,13 @@ std::string AgentModuleImpl::messagingSend(const std::string& recipient, const s
 {
     // Try real delivery_module send
     json realResult;
-    if (tryDeliveryCall("send", json::array({recipient, message}), realResult)) {
+    if (ensureDeliveryReady() && tryDeliveryCall("send", json::array({recipient, message}), realResult)) {
         json r;
         r["sent"] = true;
         r["recipient"] = recipient;
-        r["message_id"] = realResult.value("id", realResult.value("message_id", ""));
+        r["message_id"] = realResult.value("id", realResult.value("message_id", realResult.value("value", "")));
         r["mode"] = "live";
+        r["delivery_result"] = realResult;
         return r.dump();
     }
 
