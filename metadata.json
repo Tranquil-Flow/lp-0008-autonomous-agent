@@ -20,7 +20,9 @@
         "src/skill_registry.h",
         "src/skill_registry.cpp",
         "src/agent_config.h",
-        "src/agent_config.cpp"
+        "src/agent_config.cpp",
+        "src/spending_gate.h",
+        "src/spending_gate.cpp"
       ],
       "extra_include_dirs": [],
       "extra_link_libraries": []

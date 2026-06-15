@@ -1,19 +1,16 @@
 #pragma once
 
 #include <string>
-#include "logos_module_context.h"
 
 /**
  * @brief Autonomous AI agent module for Logos Core (LP-0008).
  *
- * A universal Logos module that provides:
- *   - Skill dispatch system (18 skills across 5 categories)
- *   - Spending threshold gate with owner approval
- *   - A2A protocol for multi-agent coordination
- *   - Owner channel for human-agent communication
- *
- * Public methods are the module API, callable from CLI (logoscore -c)
- * and from other modules via modules().agent_module.*.
+ * Skills across 5 categories:
+ *   meta     — introspection, config, status
+ *   storage  — file store/retrieve via storage_module
+ *   chain    — wallet operations via logos_execution_zone
+ *   messaging— send/receive via delivery_module
+ *   a2a      — agent-to-agent protocol
  */
 class AgentModuleImpl
 {
@@ -21,41 +18,41 @@ public:
     AgentModuleImpl();
 
     // === Skill Dispatch ===
-
-    /// Dispatch a skill by name. Returns JSON result.
     std::string dispatchSkill(const std::string& skill_name, const std::string& args_json);
 
-    // === Meta Skills ===
-
-    /// List all registered skills as JSON array.
+    // === Meta Skills (direct) ===
     std::string getSkills();
-
-    /// Returns agent status: health, config, thresholds, uptime.
     std::string getAgentStatus();
-
-    /// Update a config key. Returns JSON confirmation.
     std::string configure(const std::string& key, const std::string& value);
-
-    /// Get a config value by key.
     std::string getConfig(const std::string& key);
-
-    /// Get the full config as JSON.
     std::string getFullConfig();
 
+    // === Storage Skills ===
+    std::string storeData(const std::string& key, const std::string& data);
+    std::string retrieveData(const std::string& key);
+    std::string listStored();
+
+    // === Blockchain Skills ===
+    std::string getBalance(const std::string& account_hex);
+    std::string checkSpend(const std::string& amount_le16);
+    std::string transfer(const std::string& from_hex, const std::string& to_hex, const std::string& amount_le16);
+    std::string getSpendingHistory();
+    std::string getThresholds();
+
+    // === Messaging Skills ===
+    std::string sendMessage(const std::string& topic, const std::string& payload);
+    std::string subscribeTopic(const std::string& topic);
+
+    // === A2A Skills ===
+    std::string getAgentCard();
+    std::string discoverAgents();
+    std::string delegateTask(const std::string& target_agent_id, const std::string& skill_name, const std::string& args_json);
+
     // === Module Info ===
-
-    /// Returns a greeting and module version info.
     std::string greet(const std::string& name);
-
-    /// Returns a short status string.
     std::string getStatus();
 
-    // === A2A ===
-
-    /// Returns the agent's A2A Agent Card as JSON.
-    std::string getAgentCard();
-
 private:
-    void registerMetaSkills();
-    bool meta_registered_ = false;
+    void registerAllSkills();
+    bool skills_registered_ = false;
 };
