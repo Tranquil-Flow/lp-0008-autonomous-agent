@@ -1,5 +1,7 @@
 result
 result-*
+logoscore-latest
+.demo-state/
 *.dylib
 *.so
 *.lgx

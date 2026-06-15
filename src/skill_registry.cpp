@@ -45,8 +45,10 @@ std::string SkillRegistry::listSkills() const
         obj["name"] = entry.skill.name;
         obj["category"] = entry.skill.category;
         obj["description"] = entry.skill.description;
-        obj["input"] = nlohmann::json::parse(entry.skill.input_schema.empty() ? "{}" : entry.skill.input_schema);
-        obj["output"] = nlohmann::json::parse(entry.skill.output_schema.empty() ? "{}" : entry.skill.output_schema);
+        // Keep schemas/examples as strings. Some entries intentionally use
+        // human-readable placeholders like "{...}" which are not valid JSON.
+        obj["input_schema"] = entry.skill.input_schema;
+        obj["output_schema"] = entry.skill.output_schema;
         arr.push_back(obj);
     }
     return arr.dump();

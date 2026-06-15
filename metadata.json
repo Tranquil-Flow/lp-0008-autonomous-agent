@@ -21,6 +21,8 @@
         "src/skill_registry.cpp",
         "src/agent_config.h",
         "src/agent_config.cpp",
+        "src/persistence.h",
+        "src/persistence.cpp",
         "src/spending_gate.h",
         "src/spending_gate.cpp"
       ],

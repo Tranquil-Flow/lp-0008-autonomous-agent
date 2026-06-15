@@ -1,5 +1,6 @@
 #include "spending_gate.h"
 #include "agent_config.h"
+#include "persistence.h"
 #include <nlohmann/json.hpp>
 
 SpendingGate& spendingGate()
@@ -65,9 +66,38 @@ std::string SpendingGate::sumCurrentPeriod() const
     return std::to_string(total);
 }
 
+void SpendingGate::loadPersistedLocked() const
+{
+    if (loaded_) return;
+    records_.clear();
+    auto data = agent_persistence::loadJsonFile(
+        agent_persistence::spendHistoryPath(),
+        nlohmann::json{{"records", nlohmann::json::array()}}
+    );
+    if (data.contains("records") && data["records"].is_array()) {
+        for (const auto& item : data["records"]) {
+            SpendRecord r;
+            r.amount_le16 = item.value("amount_le16", "");
+            r.timestamp = item.value("timestamp", int64_t{0});
+            if (!r.amount_le16.empty() && r.timestamp > 0) records_.push_back(r);
+        }
+    }
+    loaded_ = true;
+}
+
+void SpendingGate::savePersistedLocked() const
+{
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& r : records_) {
+        arr.push_back({{"amount_le16", r.amount_le16}, {"amount", le16ToDecimal(r.amount_le16)}, {"timestamp", r.timestamp}});
+    }
+    agent_persistence::saveJsonFile(agent_persistence::spendHistoryPath(), nlohmann::json{{"records", arr}});
+}
+
 void SpendingGate::pruneExpired()
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    loadPersistedLocked();
     auto& cfg = agentConfig();
     int64_t period_sec = std::stoll(cfg.period_seconds);
     auto now = std::chrono::duration_cast<std::chrono::seconds>(
@@ -80,11 +110,13 @@ void SpendingGate::pruneExpired()
         }
     }
     records_ = std::move(kept);
+    savePersistedLocked();
 }
 
 std::string SpendingGate::checkSpend(const std::string& amount_le16) const
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    loadPersistedLocked();
     auto& cfg = agentConfig();
 
     std::string amount_dec = le16ToDecimal(amount_le16);
@@ -129,14 +161,17 @@ std::string SpendingGate::checkSpend(const std::string& amount_le16) const
 void SpendingGate::recordSpend(const std::string& amount_le16)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    loadPersistedLocked();
     auto now = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     records_.push_back(SpendRecord{amount_le16, now});
+    savePersistedLocked();
 }
 
 std::string SpendingGate::getHistory() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    loadPersistedLocked();
     auto& cfg = agentConfig();
     int64_t period_sec = std::stoll(cfg.period_seconds);
     auto now = std::chrono::duration_cast<std::chrono::seconds>(
@@ -163,6 +198,7 @@ std::string SpendingGate::getHistory() const
 std::string SpendingGate::getThresholds() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    loadPersistedLocked();
     auto& cfg = agentConfig();
     nlohmann::json r;
     r["per_tx_limit"] = cfg.per_tx_limit;

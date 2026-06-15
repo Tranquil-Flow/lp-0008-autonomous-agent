@@ -17,4 +17,12 @@ logos_module(
     SOURCES
         src/agent_module_impl.h
         src/agent_module_impl.cpp
+        src/skill_registry.h
+        src/skill_registry.cpp
+        src/agent_config.h
+        src/agent_config.cpp
+        src/persistence.h
+        src/persistence.cpp
+        src/spending_gate.h
+        src/spending_gate.cpp
 )

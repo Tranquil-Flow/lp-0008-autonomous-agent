@@ -33,7 +33,14 @@ public:
 
 private:
     mutable std::mutex mutex_;
-    std::vector<SpendRecord> records_;
+    mutable std::vector<SpendRecord> records_;
+    mutable bool loaded_ = false;
+
+    /// Load persisted records once per process. Caller must hold mutex_.
+    void loadPersistedLocked() const;
+
+    /// Save current records to disk. Caller must hold mutex_.
+    void savePersistedLocked() const;
 
     /// Sum all spend amounts in the current rolling window.
     /// Returns the sum as a decimal string.

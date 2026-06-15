@@ -2,6 +2,7 @@
 #include "skill_registry.h"
 #include "agent_config.h"
 #include "spending_gate.h"
+#include "persistence.h"
 #include <nlohmann/json.hpp>
 #include <chrono>
 #include <map>
@@ -10,9 +11,6 @@ namespace {
     SkillRegistry g_registry;
     auto g_start_time = std::chrono::steady_clock::now();
 
-    // Simple in-memory key-value store for storage skills
-    // (real implementation calls storage_module at runtime)
-    std::map<std::string, std::string> g_kv_store;
 }
 
 AgentModuleImpl::AgentModuleImpl()
@@ -83,11 +81,17 @@ void AgentModuleImpl::registerAllSkills()
             auto args = nlohmann::json::parse(args_json);
             std::string key = args.value("key", "");
             std::string data = args.value("data", "");
-            g_kv_store[key] = data;
+            auto storage = agent_persistence::loadStorage();
+            storage["entries"][key] = data;
+            std::string error;
+            bool saved = agent_persistence::saveStorage(storage, &error);
             nlohmann::json r;
             r["key"] = key;
-            r["stored"] = true;
+            r["stored"] = saved;
             r["size"] = data.size();
+            r["backend"] = "file";
+            r["path"] = agent_persistence::storagePath();
+            if (!saved) r["error"] = error;
             return r.dump();
         }
     );
@@ -101,14 +105,15 @@ void AgentModuleImpl::registerAllSkills()
             std::string key = args.value("key", "");
             nlohmann::json r;
             r["key"] = key;
-            auto it = g_kv_store.find(key);
-            if (it != g_kv_store.end()) {
+            auto storage = agent_persistence::loadStorage();
+            if (storage.contains("entries") && storage["entries"].contains(key)) {
                 r["found"] = true;
-                r["data"] = it->second;
+                r["data"] = storage["entries"][key];
             } else {
                 r["found"] = false;
                 r["error"] = "not_found";
             }
+            r["backend"] = "file";
             return r.dump();
         }
     );
@@ -120,11 +125,15 @@ void AgentModuleImpl::registerAllSkills()
         [](const std::string&) -> std::string {
             nlohmann::json r;
             nlohmann::json keys = nlohmann::json::array();
-            for (const auto& [k, v] : g_kv_store) {
-                keys.push_back(k);
+            auto storage = agent_persistence::loadStorage();
+            if (storage.contains("entries") && storage["entries"].is_object()) {
+                for (auto it = storage["entries"].begin(); it != storage["entries"].end(); ++it) {
+                    keys.push_back(it.key());
+                }
             }
             r["keys"] = keys;
-            r["count"] = g_kv_store.size();
+            r["count"] = keys.size();
+            r["backend"] = "file";
             return r.dump();
         }
     );
