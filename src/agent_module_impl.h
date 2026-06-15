@@ -4,32 +4,58 @@
 #include "logos_module_context.h"
 
 /**
- * @brief A minimal universal Logos module.
+ * @brief Autonomous AI agent module for Logos Core (LP-0008).
  *
- * In the universal authoring model you write only this implementation class.
- * Its public methods ARE the module's API — callable by other modules and from
- * the CLI (`logoscore -c`). The Qt plugin glue (the `*Plugin`/`*Interface`
- * classes, `Q_PLUGIN_METADATA`, `initLogos` wiring) is generated from this
- * header by `logos-module-builder`.
+ * A universal Logos module that provides:
+ *   - Skill dispatch system (18 skills across 5 categories)
+ *   - Spending threshold gate with owner approval
+ *   - A2A protocol for multi-agent coordination
+ *   - Owner channel for human-agent communication
  *
- * Deriving `LogosModuleContext` gives you:
- *   - `modules()` — typed callers for anything in `metadata.json#dependencies`
- *   - typed event subscriptions (`modules().dep.on<Event>(...)`)
- *   - `onContextReady()` — override it to run once the module is wired
- *
- * Module code is Qt-free: use `std::string` and friends, not `QString`.
+ * Public methods are the module API, callable from CLI (logoscore -c)
+ * and from other modules via modules().agent_module.*.
  */
-class AgentModuleImpl : public LogosModuleContext
+class AgentModuleImpl
 {
 public:
-    /// Returns a greeting and announces it as a typed `greeted` event.
+    AgentModuleImpl();
+
+    // === Skill Dispatch ===
+
+    /// Dispatch a skill by name. Returns JSON result.
+    std::string dispatchSkill(const std::string& skill_name, const std::string& args_json);
+
+    // === Meta Skills ===
+
+    /// List all registered skills as JSON array.
+    std::string getSkills();
+
+    /// Returns agent status: health, config, thresholds, uptime.
+    std::string getAgentStatus();
+
+    /// Update a config key. Returns JSON confirmation.
+    std::string configure(const std::string& key, const std::string& value);
+
+    /// Get a config value by key.
+    std::string getConfig(const std::string& key);
+
+    /// Get the full config as JSON.
+    std::string getFullConfig();
+
+    // === Module Info ===
+
+    /// Returns a greeting and module version info.
     std::string greet(const std::string& name);
 
     /// Returns a short status string.
     std::string getStatus();
 
-logos_events:
-    /// Emitted by greet() with the greeting it produced. Other modules
-    /// subscribe with `modules().agent_module.onGreeted(...)`.
-    void greeted(const std::string& greeting);
+    // === A2A ===
+
+    /// Returns the agent's A2A Agent Card as JSON.
+    std::string getAgentCard();
+
+private:
+    void registerMetaSkills();
+    bool meta_registered_ = false;
 };

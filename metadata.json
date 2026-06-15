@@ -16,7 +16,12 @@
     "external_libraries": [],
     "cmake": {
       "find_packages": [],
-      "extra_sources": [],
+      "extra_sources": [
+        "src/skill_registry.h",
+        "src/skill_registry.cpp",
+        "src/agent_config.h",
+        "src/agent_config.cpp"
+      ],
       "extra_include_dirs": [],
       "extra_link_libraries": []
     }
