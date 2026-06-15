@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build-and-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Build module
+        run: nix build .#install --print-build-logs
+
+      - name: Run demo (smoke test)
+        run: |
+          chmod +x demo.sh
+          ./demo.sh
+
+      - name: Verify module artifact exists
+        run: test -f result/modules/agent_module/agent_module_plugin.dylib || test -f result/modules/agent_module/agent_module_plugin.so
