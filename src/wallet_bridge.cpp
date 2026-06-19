@@ -1,5 +1,7 @@
 #include "wallet_bridge.h"
 
+#ifdef __APPLE__
+
 // wallet_ffi.h is a C header without an extern "C" guard; wrap it so the
 // wallet_ffi_* symbols keep C linkage and match the exports of libwallet_ffi.
 extern "C" {
@@ -261,6 +263,62 @@ void WalletBridge::save() {
     if (handle_) wallet_ffi_save(handle_);
 }
 
+}  // namespace agent
+
+#else
+
+namespace agent {
+
+WalletBridge::~WalletBridge() = default;
+
+std::string WalletBridge::lastError() const {
+    return "wallet_ffi_unavailable_on_this_platform";
+}
+
+bool WalletBridge::init(const std::string&, const std::string&, const std::string&) {
+    last_err_ = -1;
+    return false;
+}
+
+std::optional<std::string> WalletBridge::ensureShieldedAccount(const std::string&) {
+    return std::nullopt;
+}
+
+std::optional<std::string> WalletBridge::balanceDecimal(const std::string&, bool) {
+    return std::nullopt;
+}
+
+WalletBridge::TxResult WalletBridge::transferPublic(const std::string&, const std::string&, const std::array<uint8_t, 16>&) {
+    return {false, "", "wallet_ffi_unavailable_on_this_platform"};
+}
+
+WalletBridge::TxResult WalletBridge::transferShieldedOwned(const std::string&, const std::string&, const std::array<uint8_t, 16>&) {
+    return {false, "", "wallet_ffi_unavailable_on_this_platform"};
+}
+
+WalletBridge::TxResult WalletBridge::transferDeshielded(const std::string&, const std::string&, const std::array<uint8_t, 16>&) {
+    return {false, "", "wallet_ffi_unavailable_on_this_platform"};
+}
+
+uint64_t WalletBridge::currentBlockHeight() {
+    return 0;
+}
+
+bool WalletBridge::syncToCurrentBlock() {
+    return false;
+}
+
+std::string WalletBridge::sequencerAddr() {
+    return {};
+}
+
+void WalletBridge::save() {}
+
+}  // namespace agent
+
+#endif
+
+namespace agent {
 std::array<uint8_t, 16> WalletBridge::le16FromHex(const std::string& hex) {
     std::string h = hex;
     if (h.size() > 2 && h[0] == '0' && (h[1] == 'x' || h[1] == 'X')) h = h.substr(2);
