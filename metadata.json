@@ -27,7 +27,9 @@
         "src/spending_gate.h",
         "src/spending_gate.cpp",
         "src/wallet_bridge.h",
-        "src/wallet_bridge.cpp"
+        "src/wallet_bridge.cpp",
+        "lib/wallet_ffi.h",
+        "lib/libwallet_ffi.dylib"
       ],
       "extra_include_dirs": [],
       "extra_link_libraries": []
