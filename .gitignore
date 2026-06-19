@@ -13,3 +13,9 @@ logoscore-latest
 INTEGRATION_SCOPING.md
 
 tests/__pycache__/
+# Local agent planning/handover notes
+PLAN.md
+HANDOVER.md
+TASKS.md
+NOTES.md
+TODO.md

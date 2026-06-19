@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PUBLIC_FILES = ["README.md", "SUBMISSION.md", "VIDEO_SCRIPT.md", "HANDOVER.md"]
+PUBLIC_FILES = ["README.md", "SUBMISSION.md", "VIDEO_SCRIPT.md"]
 REQUIRED_FILES = [
     "docs/dependency-policy.md",
     "docs/upstream/delivery-receive-poll-api.md",
