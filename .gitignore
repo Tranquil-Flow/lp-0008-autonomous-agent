@@ -6,8 +6,8 @@ logoscore-latest
 *.so
 *.lgx
 
-# Prebuilt external libs staged into lib/ for the build (libwallet_ffi.dylib + header)
-/lib/
+# lib/ contains tracked wallet FFI artifacts required by Nix/GitHub CI.
+# Do not ignore lib/; mkLogosModule source filtering can otherwise omit it.
 
 # Local working docs (not committed)
 INTEGRATION_SCOPING.md
