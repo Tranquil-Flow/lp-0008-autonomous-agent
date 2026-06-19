@@ -6,12 +6,13 @@
   "category": "general",
   "description": "Autonomous AI agent module with wallet, storage, and messaging capabilities for Logos Core",
   "main": "agent_module_plugin",
-  "dependencies": ["storage_module", "delivery_module"],
-
+  "dependencies": [],
   "nix": {
     "packages": {
       "build": [],
-      "runtime": ["nlohmann_json"]
+      "runtime": [
+        "nlohmann_json"
+      ]
     },
     "external_libraries": [],
     "cmake": {
@@ -24,7 +25,9 @@
         "src/persistence.h",
         "src/persistence.cpp",
         "src/spending_gate.h",
-        "src/spending_gate.cpp"
+        "src/spending_gate.cpp",
+        "src/wallet_bridge.h",
+        "src/wallet_bridge.cpp"
       ],
       "extra_include_dirs": [],
       "extra_link_libraries": []

@@ -6,4 +6,10 @@ logoscore-latest
 *.so
 *.lgx
 
+# Prebuilt external libs staged into lib/ for the build (libwallet_ffi.dylib + header)
+/lib/
+
+# Local working docs (not committed)
+INTEGRATION_SCOPING.md
+
 tests/__pycache__/

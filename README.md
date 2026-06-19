@@ -15,7 +15,7 @@ An autonomous AI agent module for the Logos blockchain ecosystem. The agent hold
 │  │              Agent Module (this)                │ │
 │  │  ┌──────────────┐  ┌──────────────┐            │ │
 │  │  │ SkillRegistry│  │ SpendingGate │            │ │
-│  │  │  (21 skills) │  │ (thresholds) │            │ │
+│  │  │  (23 skills) │  │ (thresholds) │            │ │
 │  │  └──────────────┘  └──────────────┘            │ │
 │  │  ┌──────────────┐  ┌──────────────┐            │ │
 │  │  │ AgentConfig  │  │ Persistence  │            │ │
@@ -34,7 +34,13 @@ An autonomous AI agent module for the Logos blockchain ecosystem. The agent hold
 | **Messaging** | `messaging.send`, `messaging.join`, `messaging.create_group`       |
 | **Wallet** | `wallet.balance`, `wallet.send`, `wallet.history`                     |
 | **Program**| `program.query`, `program.call`, `program.deploy`                     |
-| **Agent**  | `agent.card`, `agent.discover`, `agent.task`, `agent.subscribe`, `agent.cancel` |
+
+### Live integration boundaries
+
+- Wallet balance/history and funded sends use the LEZ wallet FFI when a funded rc3 wallet is mounted; `scripts/run_live_wallet_send_verify.py` is the opt-in public-testnet proof.
+- Program calls/deploys fail closed inside the module because Logos Core exposes no module-safe LEZ program SDK/C ABI yet; the compatible rc3 SPEL/lgs external path is documented in `docs/upstream/program-live-api.md`.
+
+| **Agent**  | `agent.card`, `agent.discover`, `agent.task`, `agent.receive`, `agent.subscribe`, `agent.cancel`, `agent.complete` |
 
 ### Spending Threshold
 
@@ -68,7 +74,7 @@ Module artifact: `result/modules/agent_module/agent_module_plugin.dylib`
 The demo:
 1. Builds the module via Nix
 2. Compiles a standalone C ABI caller (`tests/cabi_call.cpp`)
-3. Exercises all 21 skills via `dispatchSkill()` through the raw C ABI
+3. Exercises all 23 skills via `dispatchSkill()` through the raw C ABI
 4. Asserts correct return values for each skill
 5. Proves the spending gate blocks over-threshold transactions
 
@@ -78,6 +84,38 @@ The demo:
 # C ABI verification harness
 tests/cabi_call.cpp     # dlopen + logos_module_dispatch caller
 tests/assert_result.py  # smart JSON unwrap + field assertion helper
+```
+
+
+## Logos Core Integration Smoke Test
+
+`demo.sh` validates the C ABI in-process. For real Logos Core runtime coverage against sibling modules, use:
+
+```bash
+scripts/run_logoscore_integration.sh all
+```
+
+The integration harness builds missing `.#install` outputs, starts a temporary `logoscore` daemon, and verifies:
+
+1. Stage B: `agent_module + storage_module` live `storage.upload` and registry-backed `storage.list`.
+2. Stage C: `agent_module + storage_module + delivery_module` live storage plus live `messaging.send` to a valid LIP-23 content topic.
+3. Safety: malformed delivery topics are kept in the local simulated log so `delivery_module` is not crashed by invalid input.
+
+For the three-agent A2A control-plane demo, run:
+
+```bash
+scripts/run_multi_agent_a2a_demo.sh
+```
+
+That harness configures Alpha/Beta/Gamma identities, publishes their Agent Cards, verifies discovery returns all three, and exercises a delegated task lifecycle (`working -> subscribed -> cancelled`).
+
+Defaults match the M4 Pro Basecamp workspace. Override paths when needed:
+
+```bash
+LOGOSCORE_CLI=/path/to/logoscore \
+LOGOS_BASECAMP_ROOT=$HOME/Projects/logos-basecamp \
+LP0008_TEST_ROOT=$HOME/lp0008-phase0 \
+scripts/run_logoscore_integration.sh stage-c
 ```
 
 ## Deployment

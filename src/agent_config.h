@@ -24,6 +24,8 @@ struct AgentConfig {
 
     // Wallet
     std::string wallet_account_hex = "";
+    // LEZ sequencer / testnet RPC the wallet talks to (overridable via meta.configure).
+    std::string sequencer_addr = "https://testnet.lez.logos.co/";
 
     // A2A heartbeat interval (seconds)
     int heartbeat_interval = 60;

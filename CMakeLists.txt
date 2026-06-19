@@ -25,4 +25,11 @@ logos_module(
         src/persistence.cpp
         src/spending_gate.h
         src/spending_gate.cpp
+        src/wallet_bridge.h
+        src/wallet_bridge.cpp
+    # Real LEZ wallet: libwallet_ffi.dylib + wallet_ffi.h are staged into lib/
+    # (prebuilt from logos-execution-zone wallet-ffi). The helper links it,
+    # adds lib/ to the include path, and copies the dylib next to the plugin.
+    EXTERNAL_LIBS
+        wallet_ffi
 )

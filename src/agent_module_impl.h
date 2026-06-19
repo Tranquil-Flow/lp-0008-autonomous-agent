@@ -5,6 +5,8 @@
 #include <logos_module_context.h>
 #include <logos_lp_client.h>   // logos::LpClient — inter-module calls
 
+#include "wallet_bridge.h"     // agent::WalletBridge — real LEZ wallet
+
 /**
  * @brief Autonomous AI agent module for Logos Core (LP-0008).
  *
@@ -68,6 +70,8 @@ public:
     std::string agentCard();
     std::string agentDiscover(const std::string& topic);
     std::string agentTask(const std::string& agentAddress, const std::string& skill, const std::string& params);
+    std::string agentComplete(const std::string& taskId, const std::string& resultJson);
+    std::string agentReceive();
     std::string agentSubscribe(const std::string& agentAddress, const std::string& taskId);
     std::string agentCancel(const std::string& agentAddress, const std::string& taskId);
 
@@ -83,7 +87,14 @@ private:
     std::unique_ptr<logos::LpClient> m_storageClient;   // → storage_module
     std::unique_ptr<logos::LpClient> m_deliveryClient;  // → delivery_module
 
+    // Real LEZ wallet (logos-execution-zone wallet-ffi). Falls back to
+    // simulated mode when the wallet cannot be brought up.
+    agent::WalletBridge m_wallet;
+    std::string m_agentAccount;  // base58 of the agent's shielded account ("" if simulated)
+    bool m_walletTried = false;  // guards one-shot lazy init
+
     // Helpers
+    void ensureWallet();  // one-shot lazy bring-up of the LEZ wallet
     bool ensureStorageReady();
     bool ensureDeliveryReady();
     bool tryStorageCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);

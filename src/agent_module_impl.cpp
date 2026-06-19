@@ -10,15 +10,81 @@
 #include <fstream>
 #include <filesystem>
 #include <sstream>
+#include <thread>
+#include <vector>
 
 namespace fs = std::filesystem;
 using json = nlohmann::json;
+
+namespace {
+bool isDeliveryContentTopic(const std::string& topic)
+{
+    // LIP-23 content topics accepted by delivery_module:
+    //   /<application>/<version>/<topic-name>/<encoding>
+    //   /gen/<application>/<version>/<topic-name>/<encoding>
+    // Guard here because delivery_module currently aborts its process on invalid
+    // send topics instead of returning an ordinary LogosResult failure.
+    if (topic.empty() || topic[0] != '/') return false;
+    std::vector<std::string> parts;
+    std::stringstream ss(topic);
+    std::string part;
+    while (std::getline(ss, part, '/')) {
+        if (!part.empty()) parts.push_back(part);
+    }
+    if (parts.size() == 4) return true;
+    return parts.size() == 5 && parts[0] == "gen";
+}
+
+long long nowMillis()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+json parseJsonOrString(const std::string& value)
+{
+    try {
+        if (!value.empty()) return json::parse(value);
+    } catch (...) {}
+    return value;
+}
+
+void appendTaskEvent(json& task, const std::string& status)
+{
+    if (!task.contains("events") || !task["events"].is_array()) task["events"] = json::array();
+    task["events"].push_back(json{{"status", status}, {"at", nowMillis()}});
+    task["updated_at"] = nowMillis();
+}
+
+json argsForSkill(const std::string& skill, const std::string& params)
+{
+    json parsed = parseJsonOrString(params);
+    if (parsed.is_array()) return parsed;
+    if (!parsed.is_object()) return json::array();
+
+    if (skill == "messaging.send") return json::array({parsed.value("recipient", ""), parsed.value("message", "")});
+    if (skill == "messaging.join") return json::array({parsed.value("group_id", "")});
+    if (skill == "messaging.create_group") return json::array({parsed.value("members", "")});
+    if (skill == "storage.upload") return json::array({parsed.value("path", ""), parsed.value("label", "")});
+    if (skill == "storage.download") return json::array({parsed.value("address", ""), parsed.value("path", "")});
+    if (skill == "storage.share") return json::array({parsed.value("address", ""), parsed.value("recipient", "")});
+    if (skill == "wallet.send") return json::array({parsed.value("recipient", ""), parsed.value("amount_le16", "")});
+    if (skill == "program.query") return json::array({parsed.value("program_id", ""), parsed.value("params", "{}")});
+    if (skill == "program.call") return json::array({parsed.value("program_id", ""), parsed.value("instruction", ""), parsed.value("params", "{}")});
+    if (skill == "program.deploy") return json::array({parsed.value("binary_path", "")});
+    if (skill == "agent.discover") return json::array({parsed.value("topic", "")});
+    if (skill == "agent.subscribe") return json::array({parsed.value("agent_address", ""), parsed.value("task_id", "")});
+    if (skill == "agent.receive") return json::array();
+    if (skill == "agent.cancel") return json::array({parsed.value("agent_address", ""), parsed.value("task_id", "")});
+    return json::array();
+}
+}
 
 // ─── Construction & Lifecycle ──────────────────────────────────────────────
 
 AgentModuleImpl::AgentModuleImpl()
 {
-    // Register all 21 skills as metadata for listing/discovery.
+    // Register all 23 skills as metadata for listing/discovery.
     auto& reg = g_registry();
     // Meta
     reg.addMeta("meta.skills", "meta", "List all available skills and their parameters", "{}", "[{...}]");
@@ -44,7 +110,9 @@ AgentModuleImpl::AgentModuleImpl()
     // Agent (A2A)
     reg.addMeta("agent.card", "agent", "Return this agent's A2A Agent Card", "{}", "{...}");
     reg.addMeta("agent.discover", "agent", "Fetch Agent Cards from a discovery topic", R"({"topic":"/logos/agents/v1/discovery"})", R"({"agents":[...]})");
-    reg.addMeta("agent.task", "agent", "Send an A2A task request to another agent", R"({"agent_address":"0x...","skill":"storage.upload","params":"{}"})", R"({"task_id":"...","status":"working"})");
+    reg.addMeta("agent.task", "agent", "Send an A2A task request to another agent", R"({"agent_address":"0x...","skill":"storage.upload","params":"{}"})", R"({"task_id":"...","status":"completed","result":{...}})");
+    reg.addMeta("agent.complete", "agent", "Complete a task with a result payload", R"({"task_id":"task-1","result":"{}"})", R"({"completed":true,"status":"completed"})");
+    reg.addMeta("agent.receive", "agent", "Process inbound A2A task messages from this agent's task topic", R"({})", R"({"processed":1,"tasks":[...]})");
     reg.addMeta("agent.subscribe", "agent", "Subscribe to streaming status for a running task", R"({"agent_address":"0x...","task_id":"task-1"})", R"({"subscribed":true})");
     reg.addMeta("agent.cancel", "agent", "Cancel an in-progress task and trigger refund", R"({"agent_address":"0x...","task_id":"task-1"})", R"({"cancelled":true,"refund":"..."})");
 }
@@ -56,6 +124,30 @@ void AgentModuleImpl::onContextReady()
     auto p = instancePersistencePath();
     if (!p.empty()) {
         agent_persistence::overrideStateDir(p);
+    }
+
+    ensureWallet();
+}
+
+// One-shot lazy bring-up of the real LEZ wallet. Invoked from onContextReady
+// and again (defensively) on first wallet use, so the wallet works whether or
+// not the host fired the lifecycle hook. On any failure the agent stays in
+// simulated mode (m_agentAccount empty) and wallet skills fall back.
+void AgentModuleImpl::ensureWallet()
+{
+    if (m_walletTried) return;
+    m_walletTried = true;
+
+    auto& cfg = agentConfig();
+    const std::string walletDir = agent_persistence::stateDir() + "/wallet";
+    if (m_wallet.init(walletDir, cfg.sequencer_addr)) {
+        if (auto acct = m_wallet.ensureShieldedAccount(cfg.wallet_account_hex)) {
+            m_agentAccount = *acct;
+            if (cfg.wallet_account_hex != *acct) {
+                cfg.wallet_account_hex = *acct;
+                cfg.save();
+            }
+        }
     }
 }
 
@@ -185,6 +277,8 @@ std::string AgentModuleImpl::dispatchSkill(const std::string& skill_name, const 
         if (skill_name == "agent.card")      return agentCard();
         if (skill_name == "agent.discover")  return agentDiscover(s(0));
         if (skill_name == "agent.task")      return agentTask(s(0), s(1), s(2));
+        if (skill_name == "agent.complete")  return agentComplete(s(0), s(1));
+        if (skill_name == "agent.receive")   return agentReceive();
         if (skill_name == "agent.subscribe") return agentSubscribe(s(0), s(1));
         if (skill_name == "agent.cancel")    return agentCancel(s(0), s(1));
 
@@ -209,6 +303,7 @@ std::string AgentModuleImpl::metaSkills()
 
 std::string AgentModuleImpl::metaStatus()
 {
+    ensureWallet();
     json r;
     r["status"] = "running";
     r["skills_count"] = g_registry().count();
@@ -223,6 +318,14 @@ std::string AgentModuleImpl::metaStatus()
     wallet["per_period_limit"] = cfg.per_period_limit;
     wallet["period_seconds"] = cfg.period_seconds;
     r["wallet_config"] = wallet;
+
+    // Wallet identity / liveness (no network call here — see wallet.balance).
+    json wstatus;
+    wstatus["live"] = m_wallet.live();
+    wstatus["account"] = m_agentAccount;
+    wstatus["mode"] = (m_wallet.live() && !m_agentAccount.empty()) ? "live" : "simulated";
+    if (m_wallet.live()) wstatus["sequencer"] = m_wallet.sequencerAddr();
+    r["wallet"] = wstatus;
 
     // Storage summary
     auto store = agent_persistence::loadJsonFile(agent_persistence::storagePath());
@@ -239,7 +342,15 @@ std::string AgentModuleImpl::metaStatus()
     r["modules"] = modules_status;
 
     // Active tasks
-    r["active_tasks"] = 0;
+    auto tasks = agent_persistence::loadJsonFile(agent_persistence::tasksPath());
+    int active = 0;
+    if (tasks.is_array()) {
+        for (const auto& t : tasks) {
+            const auto st = t.value("status", "");
+            if (st == "queued" || st == "working") ++active;
+        }
+    }
+    r["active_tasks"] = active;
 
     return r.dump();
 }
@@ -247,11 +358,7 @@ std::string AgentModuleImpl::metaStatus()
 std::string AgentModuleImpl::metaConfigure(const std::string& key, const std::string& value)
 {
     auto& cfg = agentConfig();
-    if (key == "per_tx_limit")         cfg.per_tx_limit = value;
-    else if (key == "per_period_limit") cfg.per_period_limit = value;
-    else if (key == "period_seconds")   cfg.period_seconds = value;
-    else if (key == "agent_name")       cfg.agent_name = value;
-    else {
+    if (!cfg.set(key, value)) {
         json err;
         err["error"] = "unknown_config_key";
         err["key"] = key;
@@ -280,34 +387,38 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
     }
     std::string content((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
-    // Try real storage_module upload pipeline. The current storage module exposes
-    // uploadInit(QString) and uploadInit(QString,int), not a label-bearing
-    // overload; keep the user's label in our registry metadata.
-    json realResult;
-    if (ensureStorageReady() && tryStorageCall("uploadInit", json::array({path}), realResult)) {
-        // Real upload succeeded — store CID in registry.
-        auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
-        if (!data.is_object()) data = json::object();
-        json entry;
-        entry["label"] = label;
-        entry["address"] = realResult.value("cid", realResult.value("address",
-            realResult.value("sessionId", realResult.value("value", ""))));
-        entry["size"] = content.size();
-        entry["path"] = path;
-        entry["backend"] = "storage_module";
-        entry["storage_result"] = realResult;
-        data[label] = entry;
-        agent_persistence::saveJsonFile(agent_persistence::storagePath(), data);
+    // Try real storage_module upload. A real upload requires the full session
+    // lifecycle: uploadInit -> uploadChunk -> uploadFinalize. Returning the
+    // uploadInit session id as an address was only a half-proof: it created a
+    // session but did not persist file content in storage_module.
+    json initResult;
+    if (ensureStorageReady() && tryStorageCall("uploadInit", json::array({path}), initResult)) {
+        const std::string sessionId = initResult.value("value", "");
+        json chunkResult;
+        json finalizeResult;
+        if (!sessionId.empty()
+            && tryStorageCall("uploadChunk", json::array({sessionId, content}), chunkResult)
+            && tryStorageCall("uploadFinalize", json::array({sessionId}), finalizeResult)) {
+            json entry;
+            entry["label"] = label;
+            entry["address"] = finalizeResult.value("value", "");
+            entry["size"] = content.size();
+            entry["path"] = path;
+            entry["backend"] = "storage_module";
+            entry["upload_init_result"] = initResult;
+            entry["upload_chunk_result"] = chunkResult;
+            entry["storage_result"] = finalizeResult;
 
-        json r;
-        r["address"] = entry["address"];
-        r["label"] = label;
-        r["size"] = content.size();
-        r["backend"] = "storage_module";
-        r["stored"] = true;
-        r["mode"] = "live";
-        r["storage_result"] = realResult;
-        return r.dump();
+            auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
+            if (!data.is_object()) data = json::object();
+            data[label] = entry;
+            agent_persistence::saveJsonFile(agent_persistence::storagePath(), data);
+
+            json r = entry;
+            r["stored"] = true;
+            r["mode"] = "live";
+            return r.dump();
+        }
     }
 
     // Fallback: local file persistence (simulated)
@@ -354,16 +465,33 @@ std::string AgentModuleImpl::storageDownload(const std::string& address, const s
         }
     }
 
-    // Try real storage_module fetch
+    // Try real storage_module download. fetch() only asks the storage backend to
+    // fetch/pin content; it does not write the requested output file. Use
+    // downloadToUrl so the requested path is actually materialized.
     json realResult;
-    if (ensureStorageReady() && tryStorageCall("fetch", json::array({address}), realResult)) {
+    const std::string fileUrl = "file://" + fs::absolute(path).string();
+    if (ensureStorageReady() && tryStorageCall("downloadToUrl", json::array({address, fileUrl}), realResult)) {
+        // downloadToUrl returns after the download session is accepted; the file
+        // is materialized asynchronously. Poll briefly so dispatchSkill only
+        // reports downloaded=true once the requested output path exists.
+        bool downloaded = false;
+        for (int i = 0; i < 50; ++i) {
+            if (fs::exists(path)) {
+                downloaded = true;
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
         json r;
         r["address"] = address;
         r["label"] = label;
         r["path"] = path;
-        r["downloaded"] = true;
+        r["downloaded"] = downloaded;
         r["backend"] = "storage_module";
         r["mode"] = "live";
+        r["storage_result"] = realResult;
+        if (!downloaded) r["warning"] = "download accepted but output file was not materialized before timeout";
         return r.dump();
     }
 
@@ -388,38 +516,39 @@ std::string AgentModuleImpl::storageDownload(const std::string& address, const s
 
 std::string AgentModuleImpl::storageList()
 {
-    // Try real storage_module manifests
-    json realResult;
-    if (ensureStorageReady() && tryStorageCall("manifests", json::array(), realResult)) {
-        const json files = (realResult.is_object() && realResult.contains("value"))
-            ? realResult["value"]
-            : realResult;
-        json r;
-        r["files"] = files;
-        r["count"] = files.size();
-        r["storage_result"] = realResult;
-        r["backend"] = "storage_module";
-        r["mode"] = "live";
-        return r.dump();
-    }
-
-    // Fallback: local registry
+    // The agent owns labels and per-upload metadata in its registry. The
+    // storage_module manifests call reports module-native manifests only; after
+    // uploadInit it can legitimately return an empty array even though this
+    // agent has stored files. Always build the user-facing list from the
+    // registry, and include the live module response as diagnostic context when
+    // available.
     auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
     if (!data.is_object()) data = json::object();
 
-    json r;
     json files = json::array();
     for (auto& [label, v] : data.items()) {
         json f;
         f["label"] = label;
         f["address"] = v.value("address", "");
         f["size"] = v.value("size", 0);
+        f["backend"] = v.value("backend", "file");
+        if (v.contains("storage_result")) f["storage_result"] = v["storage_result"];
         files.push_back(f);
     }
+
+    json r;
     r["files"] = files;
     r["count"] = files.size();
-    r["backend"] = "file";
-    r["mode"] = "simulated";
+
+    json realResult;
+    if (ensureStorageReady() && tryStorageCall("manifests", json::array(), realResult)) {
+        r["storage_result"] = realResult;
+        r["backend"] = "storage_module";
+        r["mode"] = "live";
+    } else {
+        r["backend"] = "file";
+        r["mode"] = "simulated";
+    }
     return r.dump();
 }
 
@@ -455,15 +584,37 @@ std::string AgentModuleImpl::storageShare(const std::string& address, const std:
 
 std::string AgentModuleImpl::messagingSend(const std::string& recipient, const std::string& message)
 {
-    // Try real delivery_module send
+    bool validContentTopic = isDeliveryContentTopic(recipient);
+
+    // Try real delivery_module send only for valid LIP-23 content topics.
+    // Invalid topics are kept in the local log instead of being forwarded into
+    // delivery_module, which can abort the module process on malformed topics.
     json realResult;
-    if (ensureDeliveryReady() && tryDeliveryCall("send", json::array({recipient, message}), realResult)) {
+    if (validContentTopic && ensureDeliveryReady() && tryDeliveryCall("send", json::array({recipient, message}), realResult)) {
         json r;
         r["sent"] = true;
         r["recipient"] = recipient;
         r["message_id"] = realResult.value("id", realResult.value("message_id", realResult.value("value", "")));
         r["mode"] = "live";
         r["delivery_result"] = realResult;
+
+        // Until delivery_module exposes a receive iterator to Logos Core, keep a
+        // local loopback copy for this agent's own task topic so inbound A2A
+        // task execution can be proven against the same persisted inbox path.
+        if (recipient == agentConfig().task_topic) {
+            auto data = agent_persistence::loadJsonFile(agent_persistence::messagesPath());
+            if (!data.is_array()) data = json::array();
+            json msg;
+            msg["direction"] = "in";
+            msg["recipient"] = recipient;
+            msg["message"] = message;
+            msg["message_id"] = r["message_id"];
+            msg["processed"] = false;
+            msg["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
+                std::chrono::system_clock::now().time_since_epoch()).count();
+            data.push_back(msg);
+            agent_persistence::saveJsonFile(agent_persistence::messagesPath(), data);
+        }
         return r.dump();
     }
 
@@ -472,9 +623,11 @@ std::string AgentModuleImpl::messagingSend(const std::string& recipient, const s
     if (!data.is_array()) data = json::array();
 
     json msg;
-    msg["direction"] = "out";
+    msg["direction"] = (recipient == agentConfig().task_topic) ? "in" : "out";
     msg["recipient"] = recipient;
     msg["message"] = message;
+    msg["message_id"] = "msg-" + std::to_string(data.size() + 1);
+    msg["processed"] = false;
     msg["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
     data.push_back(msg);
@@ -484,16 +637,21 @@ std::string AgentModuleImpl::messagingSend(const std::string& recipient, const s
     json r;
     r["sent"] = true;
     r["recipient"] = recipient;
-    r["message_id"] = "msg-" + std::to_string(data.size());
+    r["message_id"] = msg["message_id"];
     r["mode"] = "simulated";
+    if (!validContentTopic) {
+        r["note"] = "recipient is not a valid LIP-23 content topic for live delivery_module send";
+    }
     return r.dump();
 }
 
 std::string AgentModuleImpl::messagingJoin(const std::string& groupId)
 {
-    // Try real delivery_module join
+    bool validContentTopic = isDeliveryContentTopic(groupId);
+
+    // Try real delivery_module join only for valid LIP-23 content topics.
     json realResult;
-    if (tryDeliveryCall("join", json::array({groupId}), realResult)) {
+    if (validContentTopic && tryDeliveryCall("join", json::array({groupId}), realResult)) {
         json r;
         r["joined"] = true;
         r["group_id"] = groupId;
@@ -512,6 +670,9 @@ std::string AgentModuleImpl::messagingJoin(const std::string& groupId)
     r["joined"] = true;
     r["group_id"] = groupId;
     r["mode"] = "simulated";
+    if (!validContentTopic) {
+        r["note"] = "group_id is not a valid LIP-23 content topic for live delivery_module subscribe";
+    }
     return r.dump();
 }
 
@@ -565,7 +726,24 @@ std::string AgentModuleImpl::messagingCreateGroup(const std::string& members)
 
 std::string AgentModuleImpl::walletBalance()
 {
-    // Load wallet state
+    ensureWallet();
+    // Real path: query the agent's shielded balance from the LEZ wallet.
+    if (m_wallet.live() && !m_agentAccount.empty()) {
+        json r;
+        if (auto bal = m_wallet.balanceDecimal(m_agentAccount, /*is_public=*/false)) {
+            r["balance"] = *bal;
+        } else {
+            r["balance"] = "0";
+            r["note"] = m_wallet.lastError();
+        }
+        r["account"] = m_agentAccount;
+        r["currency"] = "LEZ";
+        r["sequencer"] = m_wallet.sequencerAddr();
+        r["mode"] = "live";
+        return r.dump();
+    }
+
+    // Fallback: file-backed simulated balance.
     auto data = agent_persistence::loadJsonFile(agent_persistence::walletPath());
     if (!data.is_object()) data = json::object();
 
@@ -573,11 +751,13 @@ std::string AgentModuleImpl::walletBalance()
     r["balance"] = data.value("balance", "0");
     r["account"] = data.value("account", "agent-default-account");
     r["currency"] = "LEZ";
+    r["mode"] = "simulated";
     return r.dump();
 }
 
 std::string AgentModuleImpl::walletSend(const std::string& recipient, const std::string& amountLe16)
 {
+    ensureWallet();
     auto& gate = spendingGate();
 
     // Check spending threshold
@@ -591,34 +771,59 @@ std::string AgentModuleImpl::walletSend(const std::string& recipient, const std:
         return r.dump();
     }
 
-    // Record spend
-    gate.recordSpend(amountLe16);
-
-    // Generate tx hash
-    std::string txHash = "0x" + std::to_string(std::hash<std::string>{}(
-        recipient + amountLe16 + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count())));
-
-    // Record in wallet history
-    auto wallet = agent_persistence::loadJsonFile(agent_persistence::walletPath());
-    if (!wallet.is_object()) wallet = json::object();
-    auto history = wallet.value("history", json::array());
-    json tx;
-    tx["type"] = "send";
-    tx["recipient"] = recipient;
-    tx["amount"] = amountLe16;
-    tx["tx_hash"] = txHash;
-    tx["timestamp"] = std::chrono::duration_cast<std::chrono::seconds>(
+    const auto ts = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
-    history.push_back(tx);
-    wallet["history"] = history;
-    agent_persistence::saveJsonFile(agent_persistence::walletPath(), wallet);
+
+    std::string txHash, mode, error;
+    bool submitted = false;
+
+    if (m_wallet.live() && !m_agentAccount.empty()) {
+        // Real path: deshielded transfer from the agent's shielded account to
+        // the public recipient. Emits a RISC0 proof under RISC0_DEV_MODE=0.
+        // Sync first so copied/mounted wallets do not spend stale private state.
+        m_wallet.syncToCurrentBlock();
+        auto amt = agent::WalletBridge::le16FromHex(amountLe16);
+        auto res = m_wallet.transferDeshielded(m_agentAccount, recipient, amt);
+        mode = "live";
+        submitted = res.ok;
+        txHash = res.tx_hash;
+        error = res.error;
+    } else {
+        // Fallback: simulated send with a synthetic hash.
+        mode = "simulated";
+        submitted = true;
+        txHash = "0x" + std::to_string(std::hash<std::string>{}(
+            recipient + amountLe16 + std::to_string(ts)));
+    }
 
     json r;
-    r["tx_hash"] = txHash;
     r["approved"] = true;
+    r["submitted"] = submitted;
     r["amount"] = amountLe16;
     r["recipient"] = recipient;
+    r["mode"] = mode;
+
+    if (submitted) {
+        // Only count the spend against the period budget once it actually went out.
+        gate.recordSpend(amountLe16);
+        r["tx_hash"] = txHash;
+
+        auto wallet = agent_persistence::loadJsonFile(agent_persistence::walletPath());
+        if (!wallet.is_object()) wallet = json::object();
+        auto history = wallet.value("history", json::array());
+        json tx;
+        tx["type"] = "send";
+        tx["recipient"] = recipient;
+        tx["amount"] = amountLe16;
+        tx["tx_hash"] = txHash;
+        tx["mode"] = mode;
+        tx["timestamp"] = ts;
+        history.push_back(tx);
+        wallet["history"] = history;
+        agent_persistence::saveJsonFile(agent_persistence::walletPath(), wallet);
+    } else {
+        r["error"] = error;
+    }
     return r.dump();
 }
 
@@ -639,49 +844,43 @@ std::string AgentModuleImpl::programQuery(const std::string& programId, const st
 {
     json r;
     r["program_id"] = programId;
+    r["params"] = params;
     r["result"] = json::object();
-    r["note"] = "query_simulated";
+    r["mode"] = "simulated";
+    r["note"] = "live_program_query_unavailable: Logos Core module ABI exposes no in-process LEZ program query client";
     return r.dump();
 }
 
 std::string AgentModuleImpl::programCall(const std::string& programId, const std::string& instruction, const std::string& params)
 {
-    // Program calls that involve spending are subject to threshold
-    // For this demo, we check against a notional cost
-    auto& cfg = agentConfig();
-    // Use a small notional amount for program calls
-    std::string notionalCost = "1"; // 1 unit per program call
-
     json r;
     r["program_id"] = programId;
     r["instruction"] = instruction;
-    r["tx_hash"] = "0x" + std::to_string(std::hash<std::string>{}(
-        programId + instruction + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(
-            std::chrono::system_clock::now().time_since_epoch()).count())));
-    r["submitted"] = true;
-    r["compute_cost"] = notionalCost;
+    r["params"] = params;
+    r["mode"] = "unsupported";
+    r["submitted"] = false;
+    r["error"] = "live_program_call_not_available";
+    r["note"] = "program.call fails closed until Logos Core exposes a stable in-process LEZ program SDK/C ABI; rc3 SPEL/lgs external harnesses are documented separately";
     return r.dump();
 }
 
 std::string AgentModuleImpl::programDeploy(const std::string& binaryPath)
 {
-    // Check file exists
     if (!fs::exists(binaryPath)) {
         json err;
         err["error"] = "binary_not_found";
         err["path"] = binaryPath;
+        err["deployed"] = false;
         return err.dump();
     }
 
-    // Generate program ID
-    size_t fileSize = fs::file_size(binaryPath);
-    std::string programId = "0x" + std::to_string(
-        std::hash<std::string>{}(binaryPath + std::to_string(fileSize)));
-
     json r;
-    r["program_id"] = programId;
-    r["binary_size"] = fileSize;
-    r["deployed"] = true;
+    r["path"] = binaryPath;
+    r["binary_size"] = fs::file_size(binaryPath);
+    r["mode"] = "unsupported";
+    r["deployed"] = false;
+    r["error"] = "live_program_deploy_not_available";
+    r["note"] = "program.deploy fails closed inside the agent module; use the documented rc3 lgs deploy/SPEL path outside Logos Core until a module-safe program deployment API exists";
     return r.dump();
 }
 
@@ -690,13 +889,22 @@ std::string AgentModuleImpl::programDeploy(const std::string& binaryPath)
 std::string AgentModuleImpl::agentCard()
 {
     json card;
-    card["name"] = agentConfig().agent_name;
-    card["description"] = "Autonomous AI agent for Logos Core";
+    const auto& cfg = agentConfig();
+    card["name"] = cfg.agent_name;
+    card["description"] = cfg.description;
     card["version"] = "1.0";
     card["protocol"] = "a2a";
     card["protocolVersion"] = "1.0";
     card["status"] = "active";
-    card["agent_id"] = instanceId().empty() ? "default-agent" : instanceId();
+    card["agent_id"] = !cfg.agent_id.empty()
+                         ? cfg.agent_id
+                         : (!m_agentAccount.empty()
+                            ? m_agentAccount
+                            : (instanceId().empty() ? "default-agent" : instanceId()));
+    card["account"] = m_agentAccount;  // LEZ shielded account (empty in simulated mode)
+    card["discovery_topic"] = cfg.discovery_topic;
+    card["task_topic"] = cfg.task_topic;
+    card["owner_topic"] = cfg.owner_topic;
 
     // A2A capabilities from skill registry
     json capabilities = json::parse(g_registry().listSkills());
@@ -709,6 +917,23 @@ std::string AgentModuleImpl::agentCard()
         {"per_task", "0"},
         {"mechanism", "lez_transfer"}
     });
+
+    // Publish/update our Agent Card in the local discovery registry. This gives
+    // multi-agent demos a deterministic A2A discovery path even when no live
+    // delivery subscription loop is running yet.
+    auto registry = agent_persistence::loadJsonFile(agent_persistence::discoveryPath());
+    if (!registry.is_array()) registry = json::array();
+    bool replaced = false;
+    const auto id = card.value("agent_id", "");
+    for (auto& existing : registry) {
+        if (existing.is_object() && existing.value("agent_id", "") == id) {
+            existing = card;
+            replaced = true;
+            break;
+        }
+    }
+    if (!replaced) registry.push_back(card);
+    agent_persistence::saveJsonFile(agent_persistence::discoveryPath(), registry);
 
     return card.dump();
 }
@@ -728,73 +953,212 @@ std::string AgentModuleImpl::agentDiscover(const std::string& topic)
 
 std::string AgentModuleImpl::agentTask(const std::string& agentAddress, const std::string& skill, const std::string& params)
 {
-    // Generate task ID and record
-    std::string taskId = "task-" + std::to_string(std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count());
+    const long long created = nowMillis();
 
     auto data = agent_persistence::loadJsonFile(agent_persistence::tasksPath());
     if (!data.is_array()) data = json::array();
 
+    std::string taskId = "task-" + std::to_string(created) + "-" + std::to_string(data.size());
     json task;
     task["task_id"] = taskId;
     task["agent_address"] = agentAddress;
     task["skill"] = skill;
-    task["params"] = params;
-    task["status"] = "working";
-    task["created_at"] = std::chrono::duration_cast<std::chrono::seconds>(
-        std::chrono::system_clock::now().time_since_epoch()).count();
-    data.push_back(task);
+    task["params"] = parseJsonOrString(params);
+    task["status"] = "queued";
+    task["created_at"] = created;
+    appendTaskEvent(task, "queued");
 
+    // This Phase-0 executor runs local skills synchronously when requested by a
+    // discovered/local agent. It turns the former control-plane-only task record
+    // into a persisted lifecycle with result/error payloads while preserving the
+    // A2A envelope for later remote delivery/subscription work.
+    task["status"] = "working";
+    appendTaskEvent(task, "working");
+
+    json result;
+    bool failed = false;
+    if (skill == "agent.task" || skill == "agent.complete") {
+        failed = true;
+        result = json{{"error", "unsupported_task_skill"}, {"skill", skill}};
+    } else {
+        const auto args = argsForSkill(skill, params).dump();
+        result = parseJsonOrString(dispatchSkill(skill, args));
+        failed = result.is_object() && result.contains("error");
+    }
+
+    if (failed) {
+        task["status"] = "failed";
+        task["error"] = result;
+        appendTaskEvent(task, "failed");
+    } else {
+        task["status"] = "completed";
+        task["result"] = result;
+        appendTaskEvent(task, "completed");
+    }
+
+    data.push_back(task);
     agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
 
     json r;
     r["task_id"] = taskId;
-    r["status"] = "working";
+    r["status"] = task["status"];
     r["agent_address"] = agentAddress;
     r["skill"] = skill;
+    if (task.contains("result")) r["result"] = task["result"];
+    if (task.contains("error")) r["error"] = task["error"];
+    r["events"] = task["events"];
+    return r.dump();
+}
+
+std::string AgentModuleImpl::agentComplete(const std::string& taskId, const std::string& resultJson)
+{
+    auto data = agent_persistence::loadJsonFile(agent_persistence::tasksPath());
+    if (!data.is_array()) data = json::array();
+
+    for (auto& t : data) {
+        if (t.value("task_id", "") == taskId) {
+            t["status"] = "completed";
+            t["result"] = parseJsonOrString(resultJson);
+            t.erase("error");
+            appendTaskEvent(t, "completed");
+            agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
+
+            json r;
+            r["completed"] = true;
+            r["task_id"] = taskId;
+            r["status"] = "completed";
+            r["result"] = t["result"];
+            r["events"] = t["events"];
+            return r.dump();
+        }
+    }
+
+    json r;
+    r["completed"] = false;
+    r["task_id"] = taskId;
+    r["error"] = "task_not_found";
+    return r.dump();
+}
+
+std::string AgentModuleImpl::agentReceive()
+{
+    auto data = agent_persistence::loadJsonFile(agent_persistence::messagesPath());
+    if (!data.is_array()) data = json::array();
+
+    json processedTasks = json::array();
+    int processed = 0;
+    const auto topic = agentConfig().task_topic;
+
+    for (auto& msg : data) {
+        if (msg.value("processed", false)) continue;
+        if (msg.value("recipient", "") != topic) continue;
+
+        json payload;
+        try {
+            payload = json::parse(msg.value("message", ""));
+        } catch (...) {
+            msg["processed"] = true;
+            msg["error"] = "invalid_task_envelope";
+            ++processed;
+            continue;
+        }
+
+        const std::string skill = payload.value("skill", "");
+        if (skill.empty()) {
+            msg["processed"] = true;
+            msg["error"] = "missing_skill";
+            ++processed;
+            continue;
+        }
+
+        std::string params = "{}";
+        if (payload.contains("params")) {
+            params = payload["params"].is_string() ? payload["params"].get<std::string>() : payload["params"].dump();
+        }
+        const std::string from = payload.value("from", payload.value("agent_address", "inbound"));
+
+        json task = parseJsonOrString(agentTask(from, skill, params));
+        msg["processed"] = true;
+        msg["task_id"] = task.value("task_id", "");
+        msg["task_status"] = task.value("status", "unknown");
+        processedTasks.push_back(task);
+        ++processed;
+    }
+
+    agent_persistence::saveJsonFile(agent_persistence::messagesPath(), data);
+
+    json r;
+    r["processed"] = processed;
+    r["task_topic"] = topic;
+    r["tasks"] = processedTasks;
     return r.dump();
 }
 
 std::string AgentModuleImpl::agentSubscribe(const std::string& agentAddress, const std::string& taskId)
 {
-    // Update task status
     auto data = agent_persistence::loadJsonFile(agent_persistence::tasksPath());
     if (data.is_array()) {
         for (auto& t : data) {
             if (t.value("task_id", "") == taskId) {
                 t["subscribed"] = true;
-                break;
+                agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
+
+                json r;
+                r["subscribed"] = true;
+                r["task_id"] = taskId;
+                r["current_status"] = t.value("status", "unknown");
+                if (t.contains("result")) r["result"] = t["result"];
+                if (t.contains("error")) r["error"] = t["error"];
+                if (t.contains("events")) r["events"] = t["events"];
+                return r.dump();
             }
         }
-        agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
     }
 
     json r;
-    r["subscribed"] = true;
+    r["subscribed"] = false;
     r["task_id"] = taskId;
-    r["current_status"] = "working";
+    r["current_status"] = "not_found";
     return r.dump();
 }
 
 std::string AgentModuleImpl::agentCancel(const std::string& agentAddress, const std::string& taskId)
 {
-    // Update task status and compute refund
     auto data = agent_persistence::loadJsonFile(agent_persistence::tasksPath());
     std::string refund = "0";
     if (data.is_array()) {
         for (auto& t : data) {
             if (t.value("task_id", "") == taskId) {
+                const auto st = t.value("status", "");
+                if (st == "completed" || st == "failed" || st == "cancelled") {
+                    json r;
+                    r["cancelled"] = false;
+                    r["task_id"] = taskId;
+                    r["current_status"] = st;
+                    if (t.contains("result")) r["result"] = t["result"];
+                    if (t.contains("error")) r["error"] = t["error"];
+                    return r.dump();
+                }
+
                 t["status"] = "cancelled";
                 refund = t.value("paid", "0");
-                break;
+                appendTaskEvent(t, "cancelled");
+                agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
+
+                json r;
+                r["cancelled"] = true;
+                r["task_id"] = taskId;
+                r["refund"] = refund;
+                r["current_status"] = "cancelled";
+                r["events"] = t["events"];
+                return r.dump();
             }
         }
-        agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
     }
 
     json r;
-    r["cancelled"] = true;
+    r["cancelled"] = false;
     r["task_id"] = taskId;
-    r["refund"] = refund;
+    r["error"] = "task_not_found";
     return r.dump();
 }

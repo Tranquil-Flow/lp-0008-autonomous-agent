@@ -1,0 +1,12 @@
+diff --git a/src/delivery_module_plugin.cpp b/src/delivery_module_plugin.cpp
+index fbcacc9..1eba5ba 100644
+--- a/src/delivery_module_plugin.cpp
++++ b/src/delivery_module_plugin.cpp
+@@ -320,6 +320,7 @@ LogosResult DeliveryModulePlugin::send(const QString &contentTopic, const QStrin
+
+     if (!outcome.success) {
+         qWarning() << "DeliveryModulePlugin: Send failed for topic:" << contentTopic << ", reason:" << outcome.getError();
++        return outcome;
+     }
+
+     const QString responseMessage = outcome.getString();

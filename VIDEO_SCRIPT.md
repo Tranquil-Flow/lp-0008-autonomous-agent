@@ -3,7 +3,7 @@
 ## Setup (30 sec)
 
 > "I'm demonstrating LP-0008, an autonomous AI agent module for Logos Core.
-> This module implements 21 skills across six categories: meta, storage,
+> This module implements 23 skills across six categories: meta, storage,
 > messaging, wallet, program, and agent-to-agent coordination via the A2A protocol."
 
 [Show: terminal open in project directory]
@@ -16,7 +16,7 @@
 [Show: `cat README.md` — scroll to architecture diagram]
 
 > "Key design decisions:
-> - A single AgentModuleImpl class with 21 methods, registered in a SkillRegistry
+> - A single AgentModuleImpl class with 23 registered skills in a SkillRegistry
 > - A SpendingGate that enforces per-transaction and per-period limits
 > - File-backed JSON persistence under the agent's state directory
 > - An A2A-compatible Agent Card with payment, skills, and authentication"
@@ -32,14 +32,14 @@
 
 [Run: `./demo.sh`]
 
-> "The demo script exercises all 21 skills through the raw C ABI —
+> "The demo script exercises all 23 skills through the raw C ABI —
 > we use a direct dlopen caller because the logoscore CLI has a display
 > quirk with JSON returns."
 
 [Narrate key sections as they pass:]
 
 **META section:**
-> "Greet returns our identity. Meta.skills lists all 21 capabilities with
+> "Greet returns our identity. Meta.skills lists all 23 capabilities with
 > input and output schemas. Meta.status shows the agent is running with
 > default spending thresholds: 1000 per transaction, 10000 per 24 hours."
 
@@ -56,13 +56,14 @@
 
 **AGENT section — A2A:**
 > "Agent.card returns a fully A2A-compatible Agent Card: protocol a2a,
-> version 1.0, with 21 skills and LEZ payment. Agent.task sends a task
-> request following the A2A lifecycle. Agent.subscribe gets streaming status.
-> Agent.cancel cancels and triggers refund."
+> version 1.0, with 23 skills and LEZ payment. Agent.task sends a task
+> request following the A2A lifecycle. Agent.receive processes inbound task
+> envelopes from the configured task topic. Agent.subscribe gets status.
+> Agent.cancel guards terminal tasks from mutation."
 
 ## Closing (30 sec)
 
-> "All 21 skills verified. The module is open source under MIT.
+> "All 23 skills verified. The module is open source under MIT.
 > The spending gate enforces owner-configured limits. The A2A Agent Card
 > follows the industry standard for agent interoperability, extended with
 > Logos-native payment and privacy."
