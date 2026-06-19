@@ -7,6 +7,9 @@ cd "$ROOT"
 export AGENT_MODULE_STATE_DIR="${AGENT_MODULE_STATE_DIR:-$ROOT/.demo-state}"
 CALLER="$ROOT/.demo-state/cabi_call"
 PLUGIN="$ROOT/result/modules/agent_module/agent_module_plugin.dylib"
+if [ ! -f "$PLUGIN" ]; then
+  PLUGIN="$ROOT/result/modules/agent_module/agent_module_plugin.so"
+fi
 ASSERT="$ROOT/tests/assert_result.py"
 PY="python3"
 
