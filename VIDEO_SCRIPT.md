@@ -1,6 +1,6 @@
 # LP-0008 Final Demo Video Script
 
-Target length: 6-8 minutes. Terminal-only recording. Use the exact command block in `docs/final-video-recording-kit.md` or run `scripts/run_final_pre_video_evidence.sh` directly on the M4 Pro.
+Target length: 6-8 minutes. Terminal-only recording. Record from this computer/laptop terminal, but execute the demo on the M4 Pro. The safest path is the SSH command block in `docs/final-video-recording-kit.md`; that command is launched locally and runs every proof on `m4pro`. If you are already logged into the M4 Pro, you may run `scripts/run_final_pre_video_evidence.sh` directly there.
 
 ## Claims to make
 
