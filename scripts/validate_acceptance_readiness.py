@@ -18,6 +18,7 @@ REQUIRED_FILES = [
     "docs/upstream/delivery-receive-poll-api.md",
     "docs/acceptance-gap-audit.md",
     "docs/upstream/program-live-api.md",
+    "docs/strict-success-criteria-evidence.md",
 ]
 FORBIDDEN_PATTERNS = [
     (re.compile(r"\b21 methods\b", re.I), "stale 21-method wording"),
@@ -48,6 +49,11 @@ REQUIRED_PHRASES = {
         "No in-process LEZ program SDK or C ABI",
         "program.call fails closed",
         "rc3 SPEL path exists",
+    ],
+    "docs/strict-success-criteria-evidence.md": [
+        "scripts/run_final_pre_video_evidence.sh",
+        "Three separate agents",
+        "Pending final narrated recording only",
     ],
 }
 
@@ -92,6 +98,22 @@ def main() -> int:
     for needle in ["storage_module", "delivery_module", "messaging.send"]:
         if needle not in integration:
             fail(f"integration harness missing {needle}")
+
+    final_gate = ROOT/"scripts/run_final_pre_video_evidence.sh"
+    if not final_gate.exists():
+        fail("missing final pre-video evidence gate")
+    gate_text = final_gate.read_text(errors="ignore")
+    for needle in ["run_logoscore_integration.sh all", "run_multi_agent_a2a_demo.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
+        if needle not in gate_text:
+            fail(f"final evidence gate missing {needle}")
+
+    submission = (ROOT/"SUBMISSION.md").read_text(errors="ignore")
+    unchecked = [line for line in submission.splitlines() if line.startswith("- [ ]")]
+    if unchecked:
+        fail("unchecked public success criteria remain: " + "; ".join(unchecked))
+
+    if "pending fresh recording" not in submission:
+        fail("SUBMISSION.md must keep the video as the explicit final pending artifact until URL is added")
 
     print("acceptance_readiness_ok")
     return 0

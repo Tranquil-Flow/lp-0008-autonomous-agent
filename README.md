@@ -63,7 +63,7 @@ State is stored as JSON files under `$LOGOS_AGENT_STATE_DIR` (or `~/.local/share
 nix build .#install
 ```
 
-Module artifact: `result/modules/agent_module/agent_module_plugin.dylib`
+Module artifact: `result/modules/agent_module/agent_module_plugin.dylib` on Darwin/macOS or `result/modules/agent_module/agent_module_plugin.so` on Linux.
 
 ## Demo
 
@@ -117,6 +117,18 @@ LOGOS_BASECAMP_ROOT=$HOME/Projects/logos-basecamp \
 LP0008_TEST_ROOT=$HOME/lp0008-phase0 \
 scripts/run_logoscore_integration.sh stage-c
 ```
+
+## Final pre-video evidence gate
+
+Before recording the narrated Lambda Prize video, run:
+
+```bash
+scripts/run_final_pre_video_evidence.sh
+```
+
+This runs every non-video proof: Nix build, raw C ABI all-skill demo, Logos Core storage/delivery co-load, three-agent A2A lifecycle proof, readiness validator, and the optional live LEZ wallet send verifier when funded-wallet environment variables are set.
+
+See `docs/strict-success-criteria-evidence.md` for the exact success-criteria mapping.
 
 ## Deployment
 

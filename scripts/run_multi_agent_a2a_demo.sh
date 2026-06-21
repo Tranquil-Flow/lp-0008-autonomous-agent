@@ -14,6 +14,9 @@ cd "$ROOT"
 STATE_ROOT=${LP0008_MULTI_AGENT_STATE:-$HOME/lp0008-phase0/multi_agent_a2a_$(date +%s)}
 CALLER="$STATE_ROOT/cabi_call"
 PLUGIN="$ROOT/result/modules/agent_module/agent_module_plugin.dylib"
+if [ ! -f "$PLUGIN" ]; then
+  PLUGIN="$ROOT/result/modules/agent_module/agent_module_plugin.so"
+fi
 
 mkdir -p "$STATE_ROOT"
 export AGENT_MODULE_STATE_DIR="$STATE_ROOT"
