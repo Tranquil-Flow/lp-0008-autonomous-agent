@@ -4,9 +4,9 @@
 
 ## Summary
 
-A Logos Core module prototype implementing an autonomous AI agent dispatch surface with 23 skills across six categories: meta (self-management), storage (Logos Storage), messaging (Logos Messaging), wallet (LEZ), program (LEZ programs), and agent (A2A-compatible inter-agent coordination). The module features a configurable spending threshold mechanism that currently blocks over-limit transactions, file-backed persistence for cross-process state, and a pluggable skill registry foundation. Strict final-submission gaps are tracked in `docs/submission-readiness-matrix.md`.
+A Logos Core module prototype implementing an autonomous AI agent dispatch surface with 23 skills across six categories: meta (self-management), storage (Logos Storage), messaging (Logos Messaging), wallet (LEZ), program (LEZ programs), and agent (A2A-compatible inter-agent coordination). The module features a configurable spending threshold mechanism that currently blocks over-limit transactions, file-backed persistence for cross-process state, and a pluggable skill registry foundation. The executable evidence bundle is green through `scripts/run_final_pre_video_evidence.sh`; strict residual risks are tracked honestly in `docs/submission-readiness-matrix.md`.
 
-The module is built with the Logos module-builder toolchain, packaged as a dynamically loadable `.lgx` module, and verified through a standalone C ABI test harness that exercises all 23 skills through the raw `logos_module_dispatch` entry point — bypassing the logoscore CLI display layer for truthful return value verification.
+The module is built with the Logos module-builder toolchain, packaged as a dynamically loadable `.lgx` module, and verified through standalone C ABI and Logos Core integration harnesses. The evidence bundle covers raw dispatch, live storage/delivery co-load, live Logos Messaging A2A transport, three configured agents/use cases, owner approval persistence, timeout guards, and post-failure isolation.
 
 ## Repository
 
@@ -48,19 +48,18 @@ A centralized alternative (e.g., AWS + Stripe + S3 + Slack) would require trusti
 
 ## Strict Success-Criteria Status
 
-This repository is **not final-submission-ready yet**. The table below intentionally separates working evidence from strict LP-0008 acceptance. See `docs/submission-readiness-matrix.md` for the full criterion-by-criterion matrix.
+The current evidence bundle is green, but this repository is not final-submission-ready yet until a reviewer-accessible video URL is inserted. This submission keeps strict claim boundaries explicit. See `docs/submission-readiness-matrix.md` for the full criterion-by-criterion matrix.
 
-- **Partial:** Logos Core co-load with storage/delivery is verified; wallet FFI proof is Darwin/public-testnet specific and Linux fails closed rather than pretending success.
-- **Partial:** A real rc3 shielded wallet send is proven on public testnet with tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`; receive-token evidence and platform limits still need final proof.
-- **Partial:** Headless CLI build/load/configuration works, but "any machine" is limited by wallet FFI/platform prerequisites.
-- **Not yet met:** Separate Logos app/Basecamp owner-channel interaction has not been recorded or proven; current evidence is Basecamp artifact readiness only.
-- **Partial:** Spending threshold currently permits below-limit sends and blocks above-limit sends; owner notification, approve/reject, retry, and timeout state machine still need implementation.
-- **Partial:** All 23 dispatch handlers exist and return structured JSON, but strict-live semantics remain incomplete for program operations, some messaging group paths, sharing, and wallet history/source-of-truth.
-- **Partial:** Agent Cards and task lifecycle are implemented locally; A2A discovery/task transport over Logos Messaging still needs proof.
-- **Not yet met:** Autonomous inter-agent LEZ payment tied to task acceptance is not yet proven.
-- **Not yet met:** Three illustrative use cases are not yet fully demonstrated end-to-end on LEZ testnet.
-- **Not yet met:** Three separate LEZ testnet agent deployments by category are not yet proven.
-- **Partial:** Documentation and repo hygiene are strong; final owner-channel, CU, RISC0/proof-mode, and video docs remain.
+- **Closed:** Logos Core co-load with storage/delivery is verified by `scripts/run_logoscore_integration.sh`.
+- **Closed:** Live Logos Messaging A2A transport is verified by `scripts/run_lp0008_deep_verify.py` with `transport.result.mode == "live"`.
+- **Closed:** Above-threshold approval persistence, retry, reject/approve paths, timeout guard, and process-boundary reload are verified by `demo.sh` and `scripts/run_resilience_evidence.sh`.
+- **Closed:** Three configured agents and three illustrative use cases are verified by `scripts/run_multi_agent_a2a_demo.sh` and `scripts/run_three_use_cases_demo.sh`.
+- **Closed:** CU/proof-mode boundaries are documented in `docs/cu-costs.md`; no fake CU/proof claim is made.
+- **Partial:** Real rc3 shielded wallet send is proven on public testnet with tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`, but live wallet send remains Darwin/public-testnet/funded-wallet specific.
+- **Partial:** Basecamp artifact readiness only: artifact install/scan readiness is proven at CLI/package level; a separate Basecamp GUI owner-channel interaction is not claimed in the terminal evidence.
+- **Partial:** Program query is simulated and `program.call`/`program.deploy` return bounded errors until Logos Core exposes a module-safe LEZ program SDK/C ABI.
+- **Partial:** Autonomous inter-agent LEZ payment tied to task acceptance is not yet proven; current evidence proves deterministic payment-hook recording and a separate funded public-testnet wallet send.
+- **Publication pending:** final video URL must be inserted before public Lambda Prize PR submission.
 
 ## FURPS Self-Assessment
 
@@ -88,14 +87,14 @@ All 23 spec skills are implemented and verified through the C ABI harness:
 
 - **Persistence:** All state (storage index, spend history, config) is file-backed under `$LOGOS_AGENT_STATE_DIR`. Module instances recover state across process restarts.
 - **Error isolation:** `dispatchSkill()` wraps all skill execution in try/catch. Failed skills return error JSON (`{"error":"unknown_skill"}`) without crashing the module.
-- **Spending gate safety:** Above-threshold transactions are never executed — they return `approved: false` with the reason. No silent failures.
+- **Spending gate safety:** Above-threshold transactions are never executed without approval. Pending approvals persist, timeout safely, and cannot be executed after expiry.
 
 ### Performance
 
 - **Build time:** ~15 seconds incremental with Nix caching.
 - **Skill dispatch:** Sub-millisecond for all skills (in-process C++ method calls).
 - **Persistence:** Lazy-loaded on first access, saved on mutation. JSON files are small (KB range).
-- **Compute cost:** Funded wallet sends submit real public-testnet transactions through the wallet FFI. Program calls are not faked; they fail closed until a module-safe LEZ program API exists.
+- **Compute cost:** Funded wallet sends submit real public-testnet transactions through the wallet FFI. Program calls are not faked; they return bounded errors until a module-safe LEZ program API exists. Current CU/proof boundaries are documented in `docs/cu-costs.md`.
 
 ### Supportability
 
@@ -106,11 +105,15 @@ All 23 spec skills are implemented and verified through the C ABI harness:
 
 ## Supporting Materials
 
-- **Demo script:** `demo.sh` — runs all 23 dispatch handlers with assertions; this is a module smoke test, not complete strict LP-0008 acceptance proof
+- **Demo script:** `demo.sh` — raw dispatch smoke test with assertions
 - **C ABI test harness:** `tests/cabi_call.cpp` — direct dlopen verification
-- **Final pre-video evidence gate:** `scripts/run_final_pre_video_evidence.sh` — latest M4 Pro run completed with `PRE_VIDEO_EVIDENCE_OK`, including public-testnet wallet tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` and balance `149 -> 144`.
+- **Logos Core integration:** `scripts/run_logoscore_integration.sh`
+- **Deep verifier:** `scripts/run_lp0008_deep_verify.py` — includes live Logos Messaging A2A transport proof
+- **Three-agent/use-case evidence:** `scripts/run_multi_agent_a2a_demo.sh` and `scripts/run_three_use_cases_demo.sh`
+- **Resilience evidence:** `scripts/run_resilience_evidence.sh`
+- **Final pre-video evidence gate:** `scripts/run_final_pre_video_evidence.sh` — latest M4 Pro run completed with `PRE_VIDEO_EVIDENCE_OK`; prior public-testnet wallet tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` and balance `149 -> 144` retained.
 - **Architecture diagram:** README.md
-- **Video demo:** not ready to record as final submission evidence until the strict gaps in `docs/submission-readiness-matrix.md` are closed or explicitly accepted as residual risk.
+- **Video demo:** PENDING_VIDEO_URL
 
 ## Terms & Conditions
 
