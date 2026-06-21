@@ -6,11 +6,11 @@ Target length: 6-8 minutes. Terminal-only recording. Record from this computer/l
 
 - LP-0008 is implemented as a Logos Core autonomous agent module.
 - The public repo and commit shown in the recording are the submitted artifacts.
-- All 23 skills are verified through raw C ABI / Logos Core paths.
+- The skill surface is verified through raw C ABI / Logos Core paths.
 - Storage and delivery are exercised through live Logos Core modules where APIs exist.
-- Three configured agents prove A2A Agent Cards, discovery, task intake, subscribe readback, and terminal cancel guard.
+- Three configured agents and three illustrative use cases prove A2A Agent Cards, discovery, task intake, subscribe readback, use-case execution, and terminal cancel guard.
 - LEZ wallet send is real public-testnet evidence when the funded rc3 wallet is mounted.
-- Program execution is not faked: program call/deploy fail closed until Logos exposes a module-safe LEZ program SDK/C ABI.
+- Program execution is not faked: program call/deploy return bounded errors until Logos exposes a module-safe LEZ program SDK/C ABI.
 
 ## Claims not to make
 
@@ -79,7 +79,7 @@ Callouts while it runs:
 - "Meta.skills lists all 23 skills with schemas."
 - "The spending gate approves below-threshold sends and blocks over-threshold sends with `exceeds_per_tx_limit`."
 - "A2A card returns protocol `a2a`, version `1.0`, payment metadata, and skill schema."
-- "Program call and deploy fail closed; they are not simulated as success."
+- "Program call and deploy return bounded errors; they are not simulated as success."
 
 ## Scene 4 — Logos Core integration, 90 sec
 
@@ -93,17 +93,19 @@ Narration cue:
 
 "This starts fresh Logos Core daemon instances and co-loads the agent with storage and delivery modules. Stage B proves live storage upload/list through storage_module. Stage C proves agent, storage, and delivery together, including a valid LIP-23 delivery send. The invalid-topic guard shows the agent prevents a known delivery abort path and keeps the daemon alive."
 
-## Scene 5 — three-agent A2A proof, 75 sec
+## Scene 5 — three-agent A2A and use-case proof, 90 sec
 
 On screen:
 
 ```bash
 ./scripts/run_multi_agent_a2a_demo.sh
+./scripts/run_three_use_cases_demo.sh
+./scripts/run_resilience_evidence.sh
 ```
 
 Narration cue:
 
-"This configures three separate agents: Alpha Storage, Beta Messaging, and Gamma Chain. Each has its own Agent Card, task topic, owner topic, and role. The demo proves discovery of all three cards, inbound task envelope processing through `agent.receive`, queued-to-working-to-completed lifecycle, subscribe readback, and terminal cancel guards."
+"This configures Alpha Storage, Beta Messaging, and Gamma Chain with separate Agent Cards, task topics, owner topics, and roles. The use-case script proves personal file vault, marketplace payment hook, and multi-agent workflow evidence. The resilience script proves persisted approvals survive a process boundary, expired approvals return bounded errors, and a failed task does not poison later skill execution."
 
 ## Scene 6 — deep verifier and readiness gate, 60 sec
 
@@ -146,12 +148,12 @@ sed -n '1,140p' docs/strict-success-criteria-evidence.md
 
 Narration cue:
 
-"The evidence map links each LP-0008 success criterion to a command or artifact. The only remaining publication step after this recording is to paste the video URL into `SUBMISSION.md` and into the Lambda Prize `solutions/LP-0008.md` PR."
+"The evidence map links each LP-0008 success criterion to a command or artifact. After recording, paste the video URL into `SUBMISSION.md` and the Lambda Prize `solutions/LP-0008.md` draft, rerun validators, and ask for explicit approval before opening a public prize PR."
 
 ## Upload checklist
 
 1. Export MP4 at readable terminal resolution.
-2. Upload unlisted/public to a reviewer-accessible URL.
+2. Upload unlisted/public to a accessible URL.
 3. Patch video URL into `SUBMISSION.md`.
 4. Re-run:
 

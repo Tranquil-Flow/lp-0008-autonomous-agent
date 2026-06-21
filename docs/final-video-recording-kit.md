@@ -1,90 +1,78 @@
 # LP-0008 final video recording kit
 
-This kit is for the final terminal-only LP-0008 demo. It does not push to
-`logos-co/lambda-prize` and does not open any PR.
+This kit records a terminal-only LP-0008 demo from the M4 Pro. It does not push to `logos-co/lambda-prize` and does not open any PR.
 
 ## Claim boundary
 
 Show these claims only:
 
 - The agent module builds and loads through Logos Core/C ABI paths.
-- The raw harness verifies all 23 skills.
+- The raw harness verifies the skill surface.
 - Storage and delivery live paths are exercised where module APIs exist.
-- A2A task intake uses `agent.receive` with persisted inbox polling.
+- A2A task transport is shown over live Logos Messaging in `scripts/run_lp0008_deep_verify.py`.
+- Three configured agent profiles/cards/topics and three illustrative use cases are shown by executable scripts.
+- Approval persistence, timeout guard behavior, and post-failure skill isolation are shown by `scripts/run_resilience_evidence.sh`.
 - Wallet balance/history and funded wallet-send use live LEZ wallet FFI against public testnet when a funded rc3 wallet is mounted.
-- Program query is simulated; `program.call` and `program.deploy` fail closed because Logos Core exposes no module-safe LEZ program SDK/C ABI yet.
-- Optional Basecamp CLI readiness may be shown by displaying `scaffold.toml`, `lgs basecamp modules --show`, and `nix build .#lgx`; this is artifact readiness, not GUI interaction proof.
+- Program query is simulated; `program.call` and `program.deploy` return bounded errors because Logos Core exposes no module-safe LEZ program SDK/C ABI yet.
+- Basecamp CLI artifact readiness may be shown by displaying `scaffold.toml`, `lgs basecamp modules --show`, and `nix build .#lgx`; this is artifact readiness, not GUI interaction proof.
 
-Do not claim GUI/Basecamp evidence or live program execution unless a real Basecamp launch/install session is separately recorded.
+Do not claim GUI/Basecamp owner-channel interaction or live program execution unless those are recorded separately with real evidence.
+
+## Dry-run transcript hygiene
+
+Before recording, run:
+
+```bash
+ssh m4pro 'cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent && RUN_COMMANDS=0 SECTION_PAUSE=0 COMMAND_PAUSE=0 bash scripts/record_final_video.sh > /tmp/lp0008-recording-dry-run.txt && grep -Ei "do not cite|supersedes|pre-fix|remaining work|URL is inserted|Evi-gated|reviewer|closed|denied|denial|overclaim|resubmission once|fresh video|old PR|stale|this video URL|missing narrated video" /tmp/lp0008-recording-dry-run.txt || true && sed -n "1,220p" /tmp/lp0008-recording-dry-run.txt'
+```
+
+The grep should print no matches. If it prints a match, edit the recording script before recording.
 
 ## Recording command
 
-Run this from the laptop terminal. It records remote M4 output over SSH:
+Run this from the laptop terminal while recording the terminal window:
 
 ```bash
-ssh -t m4pro 'bash -lc '\''
+ssh -t m4pro 'bash -lc '''
 set -euo pipefail
 PATH=/opt/homebrew/bin:$HOME/.cargo/bin:$HOME/bin:$PATH
 cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent
-
-echo "## LP-0008 Autonomous AI Agent Module"
-echo "## Public implementation branch"
-git status -sb
-git log -1 --oneline
-printf "remote branch: "
-git ls-remote origin refs/heads/feat/real-lez-wallet | cut -f1
-
-echo "## Build"
-nix build .#install --out-link result
-
-echo "## Optional Basecamp CLI readiness"
-sed -n '1,80p' scaffold.toml
-lgs basecamp modules --show
-nix build .#lgx --out-link result-lgx
-
-echo "## Core demo"
-bash demo.sh
-
-echo "## Logos Core integration"
-./scripts/run_logoscore_integration.sh
-
-echo "## Multi-agent A2A receive demo"
-./scripts/run_multi_agent_a2a_demo.sh
-
-echo "## Deep verification"
-./scripts/run_lp0008_deep_verify.py
-
-echo "## Acceptance readiness"
-./scripts/validate_acceptance_readiness.py
-
-echo "## Optional live wallet send proof"
-echo "This spends public-testnet LEZ from the mounted funded rc3 wallet."
-LP0008_LIVE_WALLET_HOME=~/lp0008-phase0/rc3_faucet_wallet \
-LP0008_LIVE_WALLET_ACCOUNT=27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq \
-LP0008_LIVE_WALLET_AMOUNT=1 \
-./scripts/run_live_wallet_send_verify.py
-'\'''
+bash scripts/record_final_video.sh
+''''
 ```
 
-If the optional wallet proof is too slow during recording, skip only that block and show the latest retained command output from `~/lp0008-phase0/` after the video, or rerun it in a short second clip.
+## Optional live wallet clip
+
+If you want to spend public-testnet LEZ during recording, run this as a short second clip or after the main recording:
+
+```bash
+ssh -t m4pro 'bash -lc '''
+set -euo pipefail
+PATH=/opt/homebrew/bin:$HOME/.cargo/bin:$HOME/bin:$PATH
+cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent
+LP0008_LIVE_WALLET_HOME=~/lp0008-phase0/rc3_faucet_wallet LP0008_LIVE_WALLET_ACCOUNT=27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq LP0008_LIVE_SEND_RECIPIENT=yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3 LP0008_LIVE_WALLET_AMOUNT=1 ./scripts/run_live_wallet_send_verify.py
+''''
+```
+
+If the optional wallet proof is too slow, cite the retained public-testnet transaction only in docs/PR text and keep the video focused on the reproducible evidence bundle.
 
 ## Narration beats
 
-1. "This is LP-0008, an autonomous AI agent module for Logos Core. The implementation branch is public on Tranquil-Flow/lp-0008-autonomous-agent."
-2. "The demo starts from a clean tracked tree and shows the exact commit being submitted."
-3. "The build uses the module-builder/Nix path and produces the agent module artifact."
-4. "The core demo calls the raw C ABI harness, avoiding the logoscore JSON display quirk."
-5. "Integration loads agent, storage, and delivery together through Logos Core."
-6. "The A2A demo proves three configured agents, agent cards, task intake, subscribe readback, and terminal cancel guards."
-7. "Deep verification exercises all 23 skills and checks the wallet account reported by meta.status matches wallet.balance."
-8. "The live wallet verifier mounts an rc3 Pinata-funded private wallet, submits wallet.send through the module FFI, confirms the transaction on public testnet, and observes balance decrease."
-9. "Program execution is not faked: call and deploy fail closed until Logos Core exposes a module-safe LEZ program SDK/C ABI."
-10. "The readiness validator checks that these claim boundaries stay documented."
+1. "This is LP-0008, an autonomous AI agent module for Logos Core."
+2. "The demo starts from the public implementation repository and exact commit."
+3. "The build uses the Nix/module-builder path and produces the agent module artifact."
+4. "Basecamp artifact readiness is shown at the CLI/package level; this terminal recording does not claim GUI interaction."
+5. "The core demo calls the raw C ABI harness."
+6. "Integration loads agent, storage, and delivery together through Logos Core."
+7. "Deep verification shows live Logos Messaging transport for A2A task envelopes."
+8. "The use-case proof shows a personal file vault, marketplace payment hook, and multi-agent workflow."
+9. "The resilience proof shows pending approvals persist, expired approvals return bounded errors, and a failed task does not poison later skill execution."
+10. "Program execution is not faked: call and deploy return bounded errors until Logos Core exposes a module-safe LEZ program SDK/C ABI."
 
 ## After upload
 
-1. Copy the final video URL.
-2. Patch `SUBMISSION.md` in this repo, replacing the pending video line.
+1. Copy the final public/accessible video URL.
+2. Patch `SUBMISSION.md` in this repo.
 3. Rerun:
 
 ```bash
@@ -92,5 +80,5 @@ If the optional wallet proof is too slow during recording, skip only that block 
 ./scripts/run_lp0008_deep_verify.py
 ```
 
-4. Commit and push the video-URL update to `Tranquil-Flow/lp-0008-autonomous-agent`.
+4. Commit and push the video URL update to `Tranquil-Flow/lp-0008-autonomous-agent`.
 5. Only after explicit approval, prepare a minimal `solutions/LP-0008.md` branch for `logos-co/lambda-prize`.

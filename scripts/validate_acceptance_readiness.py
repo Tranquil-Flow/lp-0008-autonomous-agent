@@ -26,6 +26,7 @@ REQUIRED_FILES = [
     "docs/resilience-evidence.md",
     "scripts/run_three_use_cases_demo.sh",
     "scripts/run_resilience_evidence.sh",
+    "scripts/record_final_video.sh",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -97,6 +98,12 @@ REQUIRED_PHRASES = {
         "approval_expired",
         "unknown_skill",
         "summary.json",
+    ],
+    "scripts/record_final_video.sh": [
+        "LP-0008 Autonomous AI Agent",
+        "run_lp0008_deep_verify.py",
+        "run_three_use_cases_demo.sh",
+        "run_resilience_evidence.sh",
     ],
     "scaffold.toml": [
         "[modules.agent_module]",
