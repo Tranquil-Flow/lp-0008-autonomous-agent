@@ -20,6 +20,15 @@ export LP0008_LIVE_SEND_RECIPIENT=yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3
 
 The gate runs build, raw C ABI verification, Logos Core co-load integration, three-agent A2A proof, readiness validation, and the optional live wallet-send verifier.
 
+Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_OK` and real public-testnet wallet proof:
+
+- tx: `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`
+- account: `27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq`
+- recipient: `yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3`
+- observed balance: `149 -> 144`
+- `tx_found: true`
+- retained log: `~/lp0008-phase0/final_pre_video_evidence.log`
+
 ## Evidence table
 
 | Criterion | Evidence |

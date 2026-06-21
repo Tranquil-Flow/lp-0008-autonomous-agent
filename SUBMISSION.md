@@ -106,6 +106,7 @@ All 23 spec skills are implemented and verified through the C ABI harness:
 
 - **Demo script:** `demo.sh` — runs all 23 skills with assertions
 - **C ABI test harness:** `tests/cabi_call.cpp` — direct dlopen verification
+- **Final pre-video evidence gate:** `scripts/run_final_pre_video_evidence.sh` — latest M4 Pro run completed with `PRE_VIDEO_EVIDENCE_OK`, including public-testnet wallet tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` and balance `149 -> 144`.
 - **Architecture diagram:** README.md
 - **Video demo:** pending fresh recording before public PR submission — this is the only remaining publication artifact after `scripts/run_final_pre_video_evidence.sh` passes.
 
