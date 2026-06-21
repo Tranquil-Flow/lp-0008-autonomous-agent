@@ -18,6 +18,7 @@ REQUIRED_FILES = [
     "docs/upstream/delivery-receive-poll-api.md",
     "docs/acceptance-gap-audit.md",
     "docs/upstream/program-live-api.md",
+    "docs/final-video-audio-narration.md",
     "docs/strict-success-criteria-evidence.md",
 ]
 FORBIDDEN_PATTERNS = [
