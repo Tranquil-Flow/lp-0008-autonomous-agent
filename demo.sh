@@ -200,6 +200,21 @@ assert program.deploy .error '"live_program_deploy_not_available"'
 say "AGENT (A2A): Card, discover, task, receive, subscribe, complete, cancel"
 # ═══════════════════════════════════════════════════════════════════════
 
+# Enable deterministic per-task LEZ payment hook for agent.task. In live mode
+# the same hook uses wallet.send; in this generic smoke demo wallet FFI is
+# disabled so the proof remains deterministic and CI-safe.
+call meta.configure '["per_tx_limit","500"]'
+call meta.configure "$(python3 - <<PY
+import json
+print(json.dumps(["a2a_payment_recipient", "$VALID_RECIPIENT"]))
+PY
+)"
+call meta.configure "$(python3 - <<PY
+import json
+print(json.dumps(["a2a_payment_amount_le16", "$SMALL"]))
+PY
+)"
+
 call agent.card '[]'
 assert agent.card .protocol '"a2a"'
 assert agent.card .status '"active"'
@@ -216,9 +231,11 @@ print(f'ok agent.card: A2A-compatible, {len(skills)} skills, payment declared')
 call agent.discover '["\/logos\/agents\/v1\/discovery"]'
 assert agent.discover .topic '"/logos/agents/v1/discovery"'
 
-call agent.task '["0x-beta","messaging.send","{\"recipient\":\"/lp0008/1/demo/tasks\",\"message\":\"handoff\"}"]'
+call agent.task '["/lp0008/1/demo/tasks","messaging.send","{\"recipient\":\"/lp0008/1/demo/tasks\",\"message\":\"handoff\"}"]'
 assert agent.task .status '"completed"'
 assert agent.task .result.sent true
+assert agent.task .transport.result.sent true
+assert agent.task .payment.submitted true
 
 TASK_ID=$(getval agent.task .task_id)
 
@@ -262,5 +279,5 @@ echo "  ✓ Wallet:    balance, send approval path (gate blocks >500), history"
 echo "  ✓ Program:   query, call, deploy"
 echo "  ✓ Agent:     card (A2A), discover, task, receive, subscribe, complete, cancel"
 echo ""
-say "Demo passed: all spec skills work, owner approval flow gates above-threshold sends, A2A card is compliant."
+say "Demo passed: all spec skills work, owner approval gates above-threshold sends, and A2A task transport/payment hooks are recorded."
 # ═══════════════════════════════════════════════════════════════════════

@@ -1116,7 +1116,8 @@ std::string AgentModuleImpl::agentCard()
     card["authentication"] = json::object({{"type", "logos_identity"}});
     card["payment"] = json::object({
         {"currency", "LEZ"},
-        {"per_task", "0"},
+        {"per_task", cfg.a2a_payment_amount_le16.empty() ? "0" : cfg.a2a_payment_amount_le16},
+        {"recipient", cfg.a2a_payment_recipient},
         {"mechanism", "lez_transfer"}
     });
 
@@ -1170,10 +1171,44 @@ std::string AgentModuleImpl::agentTask(const std::string& agentAddress, const st
     task["created_at"] = created;
     appendTaskEvent(task, "queued");
 
-    // This Phase-0 executor runs local skills synchronously when requested by a
-    // discovered/local agent. It turns the former control-plane-only task record
-    // into a persisted lifecycle with result/error payloads while preserving the
-    // A2A envelope for later remote delivery/subscription work.
+    // Publish an A2A task envelope to the target agent's task topic when the
+    // target can be resolved from the discovered Agent Card registry. If the
+    // delivery module is co-loaded and the topic is valid LIP-23, this path uses
+    // live Logos Messaging; otherwise messagingSend records the same envelope in
+    // the local persisted outbox/inbox for deterministic tests.
+    std::string targetTaskTopic;
+    auto registry = agent_persistence::loadJsonFile(agent_persistence::discoveryPath());
+    if (registry.is_array()) {
+        for (const auto& card : registry) {
+            if (!card.is_object()) continue;
+            if (card.value("agent_id", "") == agentAddress ||
+                card.value("account", "") == agentAddress ||
+                card.value("name", "") == agentAddress) {
+                targetTaskTopic = card.value("task_topic", "");
+                break;
+            }
+        }
+    }
+    if (targetTaskTopic.empty() && !agentAddress.empty() && agentAddress[0] == '/') {
+        targetTaskTopic = agentAddress;
+    }
+    if (!targetTaskTopic.empty()) {
+        json envelope;
+        envelope["type"] = "a2a.task.request";
+        envelope["task_id"] = taskId;
+        envelope["from"] = agentConfig().agent_id;
+        envelope["to"] = agentAddress;
+        envelope["skill"] = skill;
+        envelope["params"] = parseJsonOrString(params);
+        envelope["created_at"] = created;
+        json transport = parseJsonOrString(messagingSend(targetTaskTopic, envelope.dump()));
+        task["transport"] = json{{"topic", targetTaskTopic}, {"result", transport}};
+        appendTaskEvent(task, "transport_sent");
+    }
+
+    // Local executor still runs synchronously for deterministic C-ABI and CI
+    // proof. The transport evidence above shows the same A2A task envelope is
+    // also emitted over the Logos Messaging path when available.
     task["status"] = "working";
     appendTaskEvent(task, "working");
 
@@ -1198,6 +1233,14 @@ std::string AgentModuleImpl::agentTask(const std::string& agentAddress, const st
         appendTaskEvent(task, "completed");
     }
 
+    const auto& cfg = agentConfig();
+    if (!failed && !cfg.a2a_payment_recipient.empty() && !cfg.a2a_payment_amount_le16.empty()
+        && cfg.a2a_payment_amount_le16 != "0") {
+        json payment = parseJsonOrString(walletSend(cfg.a2a_payment_recipient, cfg.a2a_payment_amount_le16));
+        task["payment"] = payment;
+        appendTaskEvent(task, payment.value("submitted", false) ? "payment_submitted" : "payment_recorded");
+    }
+
     data.push_back(task);
     agent_persistence::saveJsonFile(agent_persistence::tasksPath(), data);
 
@@ -1208,6 +1251,8 @@ std::string AgentModuleImpl::agentTask(const std::string& agentAddress, const st
     r["skill"] = skill;
     if (task.contains("result")) r["result"] = task["result"];
     if (task.contains("error")) r["error"] = task["error"];
+    if (task.contains("transport")) r["transport"] = task["transport"];
+    if (task.contains("payment")) r["payment"] = task["payment"];
     r["events"] = task["events"];
     return r.dump();
 }

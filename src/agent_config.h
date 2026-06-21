@@ -27,6 +27,10 @@ struct AgentConfig {
     // LEZ sequencer / testnet RPC the wallet talks to (overridable via meta.configure).
     std::string sequencer_addr = "https://testnet.lez.logos.co/";
 
+    // A2A payment hook. Empty amount/recipient means no automatic per-task payment.
+    std::string a2a_payment_recipient = "";
+    std::string a2a_payment_amount_le16 = "";
+
     // A2A heartbeat interval (seconds)
     int heartbeat_interval = 60;
 

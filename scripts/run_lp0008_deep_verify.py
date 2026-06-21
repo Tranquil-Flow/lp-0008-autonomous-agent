@@ -157,6 +157,7 @@ try:
 
     cli_cmd("config-agent-id", ["call", "agent_module", "dispatchSkill", "meta.configure", json.dumps(["agent_id", "deep-verify-agent"])] )
     cli_cmd("config-agent-name", ["call", "agent_module", "dispatchSkill", "meta.configure", json.dumps(["agent_name", "Deep Verify Agent"])] )
+    cli_cmd("config-task-topic-for-card", ["call", "agent_module", "dispatchSkill", "meta.configure", json.dumps(["task_topic", "/lp0008/1/deepverifytasks/proto"])] )
     cli_cmd("agent-card", ["call", "agent_module", "dispatchSkill", "agent.card", "[]"])
     card = parse_skill_result("agent-card")
     assert card.get("agent_id") == "deep-verify-agent" and card.get("name") == "Deep Verify Agent", card
@@ -168,9 +169,8 @@ try:
     disc = parse_skill_result("agent-discover")
     assert any(a.get("agent_id") == "deep-verify-agent" for a in disc.get("agents", [])), disc
 
-    cli_cmd("config-task-topic", ["call", "agent_module", "dispatchSkill", "meta.configure", json.dumps(["task_topic", "/lp0008/1/deepverify/tasks"])] )
     inbound_payload = json.dumps({"from":"alpha", "skill":"messaging.send", "params":{"recipient":"/lp0008/1/deepverify/proto", "message":"inbound task ping"}})
-    cli_cmd("inbound-task-message", ["call", "agent_module", "dispatchSkill", "messaging.send", json.dumps(["/lp0008/1/deepverify/tasks", inbound_payload])] )
+    cli_cmd("inbound-task-message", ["call", "agent_module", "dispatchSkill", "messaging.send", json.dumps(["/lp0008/1/deepverifytasks/proto", inbound_payload])] )
     inbound_msg = parse_skill_result("inbound-task-message")
     assert inbound_msg.get("sent") is True, inbound_msg
     cli_cmd("agent-receive", ["call", "agent_module", "dispatchSkill", "agent.receive", "[]"])
@@ -181,6 +181,9 @@ try:
     cli_cmd("agent-task", ["call", "agent_module", "dispatchSkill", "agent.task", json.dumps(["deep-verify-agent", "messaging.send", '{"recipient":"/lp0008/1/deepverify/proto","message":"task ping"}'])] )
     task = parse_skill_result("agent-task")
     assert task.get("status") == "completed" and task.get("task_id"), task
+    assert task.get("transport", {}).get("result", {}).get("sent") is True, task
+    assert task.get("transport", {}).get("result", {}).get("mode") == "live", task
+    assert task.get("transport", {}).get("topic") == "/lp0008/1/deepverifytasks/proto", task
     assert task.get("result", {}).get("sent") is True and task.get("result", {}).get("mode") == "live", task
     cli_cmd("agent-subscribe", ["call", "agent_module", "dispatchSkill", "agent.subscribe", json.dumps(["deep-verify-agent", task["task_id"]])] )
     sub = parse_skill_result("agent-subscribe")
@@ -209,7 +212,9 @@ try:
         persisted = by_id.get(task["task_id"])
         if persisted:
             assert persisted.get("status") == "completed", persisted
-            assert [e.get("status") for e in persisted.get("events", [])] == ["queued", "working", "completed"], persisted
+            event_names = [e.get("status") for e in persisted.get("events", [])]
+            assert event_names[:4] == ["queued", "transport_sent", "working", "completed"], persisted
+            assert persisted.get("transport", {}).get("result", {}).get("mode") == "live", persisted
             assert persisted.get("result", {}).get("sent") is True, persisted
         shutil.copy2(p, BASE / f"persist-{p.parent.name}-tasks.json")
 
@@ -233,7 +238,13 @@ try:
     tasks = json.loads(tasks_path.read_text())
     ids = {a.get("agent_id") for a in discovery}
     assert {"alpha-storage","beta-messaging","gamma-chain"}.issubset(ids), ids
-    assert any(t.get("status") == "completed" and t.get("subscribed") is True and t.get("result", {}).get("sent") is True and [e.get("status") for e in t.get("events", [])] == ["queued", "working", "completed"] for t in tasks), tasks
+    assert any(
+        t.get("status") == "completed"
+        and t.get("subscribed") is True
+        and t.get("result", {}).get("sent") is True
+        and [e.get("status") for e in t.get("events", [])] in (["queued", "working", "completed"], ["queued", "transport_sent", "working", "completed"])
+        for t in tasks
+    ), tasks
 
     print("\nDEEP_VERIFY_PASS=1")
     print(f"EVIDENCE_DIR={BASE}")

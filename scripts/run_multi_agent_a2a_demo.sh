@@ -100,12 +100,13 @@ assert inbound['sent'] is True, inbound
 assert received['processed'] >= 1, received
 assert task['agent_address'] == 'alpha-storage' and task['skill'] == 'messaging.send', task
 assert task['status'] == 'completed', task
-assert [e.get('status') for e in task.get('events', [])] == ['queued','working','completed'], task
+events=[e.get('status') for e in task.get('events', [])]
+assert events in (['queued','working','completed'], ['queued','transport_sent','working','completed']), task
 assert task.get('result', {}).get('sent') is True, task
 assert sub['subscribed'] is True and sub['task_id'] == task['task_id'], sub
 assert sub.get('current_status') == 'completed', sub
 assert cancel['cancelled'] is False and cancel['task_id'] == task['task_id'], cancel
 assert cancel.get('current_status') == 'completed', cancel
-print('ASSERT multi-agent A2A: 3 cards discovered; inbound task envelope processed queued->working->completed; subscribe observes result; completed task is not cancelled: OK')
+print('ASSERT multi-agent A2A: 3 cards discovered; inbound task envelope processed through queued/transport/working/completed; subscribe observes result; completed task is not cancelled: OK')
 print(f'EVIDENCE_DIR={base}')
 PY

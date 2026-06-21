@@ -20,6 +20,8 @@ void loadConfigFromDisk(AgentConfig& cfg)
     if (j.contains("task_topic")) cfg.task_topic = j.value("task_topic", cfg.task_topic);
     if (j.contains("wallet_account_hex")) cfg.wallet_account_hex = j.value("wallet_account_hex", cfg.wallet_account_hex);
     if (j.contains("sequencer_addr")) cfg.sequencer_addr = j.value("sequencer_addr", cfg.sequencer_addr);
+    if (j.contains("a2a_payment_recipient")) cfg.a2a_payment_recipient = j.value("a2a_payment_recipient", cfg.a2a_payment_recipient);
+    if (j.contains("a2a_payment_amount_le16")) cfg.a2a_payment_amount_le16 = j.value("a2a_payment_amount_le16", cfg.a2a_payment_amount_le16);
     if (j.contains("heartbeat_interval")) cfg.heartbeat_interval = j.value("heartbeat_interval", cfg.heartbeat_interval);
     if (j.contains("enabled_skills") && j["enabled_skills"].is_array()) {
         cfg.enabled_skills = j["enabled_skills"].get<std::vector<std::string>>();
@@ -54,6 +56,8 @@ std::string AgentConfig::toJson() const
     j["task_topic"] = task_topic;
     j["wallet_account_hex"] = wallet_account_hex;
     j["sequencer_addr"] = sequencer_addr;
+    j["a2a_payment_recipient"] = a2a_payment_recipient;
+    j["a2a_payment_amount_le16"] = a2a_payment_amount_le16;
     j["heartbeat_interval"] = heartbeat_interval;
     j["enabled_skills"] = enabled_skills;
     return j.dump();
@@ -73,6 +77,8 @@ bool AgentConfig::set(const std::string& key, const std::string& value)
     if (key == "task_topic")       { task_topic = value; return true; }
     if (key == "wallet_account_hex"){ wallet_account_hex = value; return true; }
     if (key == "sequencer_addr")    { sequencer_addr = value; return true; }
+    if (key == "a2a_payment_recipient") { a2a_payment_recipient = value; return true; }
+    if (key == "a2a_payment_amount_le16") { a2a_payment_amount_le16 = value; return true; }
     if (key == "heartbeat_interval"){ try { heartbeat_interval = std::stoi(value); return true; } catch (...) { return false; } }
     return false;
 }
@@ -91,6 +97,8 @@ std::string AgentConfig::get(const std::string& key) const
     if (key == "task_topic")       return task_topic;
     if (key == "wallet_account_hex") return wallet_account_hex;
     if (key == "sequencer_addr")     return sequencer_addr;
+    if (key == "a2a_payment_recipient") return a2a_payment_recipient;
+    if (key == "a2a_payment_amount_le16") return a2a_payment_amount_le16;
     if (key == "heartbeat_interval") return std::to_string(heartbeat_interval);
     return "";
 }

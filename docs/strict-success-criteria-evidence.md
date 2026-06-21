@@ -40,7 +40,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 | Spending threshold | `demo.sh` and `scripts/run_lp0008_deep_verify.py` prove below-threshold approval and above-threshold block. |
 | All default skills | `demo.sh` and `scripts/run_lp0008_deep_verify.py` exercise all 23 skills through raw `logos_module_dispatch`. |
 | A2A-compatible coordination | `agent.card` emits an A2A card; `scripts/run_multi_agent_a2a_demo.sh` proves three Agent Cards, discovery, inbound task processing, lifecycle events, subscribe readback, and terminal cancel guard. |
-| 3 illustrative use cases | Personal file vault: `storage.upload/download/list/share`; agent services marketplace: three Agent Cards plus delegated task; multi-agent workflow: Alpha -> Beta task handoff and completion. Wallet funding/payment proof is separately covered by live LEZ wallet send. |
+| 3 illustrative use cases | Personal file vault: `storage.upload/download/list/share`; agent services marketplace: A2A Agent Card plus live task-envelope transport and deterministic payment hook; multi-agent workflow: Alpha -> Beta task handoff and completion. Wallet funding/payment proof is separately covered by live LEZ wallet send; strict live task-linked inter-agent payment remains a residual gap. |
 | Three separate agents | `scripts/run_multi_agent_a2a_demo.sh` configures Alpha Storage, Beta Messaging, and Gamma Chain identities with separate Agent Cards, task topics, owner topics, and roles. |
 | Documentation and clean repo | README, SUBMISSION, this evidence map, dependency policy, upstream-gap docs, CI workflow, MIT license. |
 | CI green | GitHub Actions builds and runs `demo.sh` on Linux. Linux wallet bridge fails closed instead of pretending Darwin wallet FFI is available. |
@@ -50,7 +50,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 
 - Separate Logos app/Basecamp owner-channel interaction is not yet proven.
 - Above-threshold owner approval/reject retry/timeout flow is implemented at module level: `wallet.send` creates persisted pending approvals and owner-topic notifications; `approval.retry`, `approval.reject`, and `approval.approve` are verified by `demo.sh`. Remaining risk: reviewer-facing Basecamp UI/channel proof is still pending.
-- A2A task transport over Logos Messaging with task-linked LEZ payment is not yet proven.
+- A2A task transport over Logos Messaging is now proven by `scripts/run_lp0008_deep_verify.py` (`transport.result.mode == live`). Live task-linked LEZ payment between separate funded agents is not yet proven; `demo.sh` proves the task payment hook and lifecycle deterministically.
 - Three separate LEZ testnet agent deployments and three full testnet use cases are not yet proven.
 - CU cost and `RISC0_DEV_MODE=0`/proof-generation evidence remain to be completed or bounded.
 
