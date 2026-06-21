@@ -48,6 +48,9 @@ scripts/run_multi_agent_a2a_demo.sh
 say "Three illustrative use cases proof"
 scripts/run_three_use_cases_demo.sh
 
+say "Persistence/fail-closed/failure-isolation resilience proof"
+scripts/run_resilience_evidence.sh
+
 say "Reviewer-facing readiness validator"
 scripts/validate_acceptance_readiness.py
 

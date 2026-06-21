@@ -68,3 +68,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 ## Three illustrative use cases
 
 `scripts/run_three_use_cases_demo.sh` exercises personal file vault, agent services marketplace payment-hook, and multi-agent workflow evidence, writing `summary.json` under the evidence directory. This is partial strict evidence: live A2A transport is separately proven by deep verify, while live inter-agent LEZ payment remains bounded by the wallet evidence path.
+
+## Resilience and fail-closed evidence
+
+`scripts/run_resilience_evidence.sh` proves persisted pending approvals reload across a new process, expired approvals fail closed on retry/approve, and a failed task does not poison subsequent storage skill execution. This is deterministic local resilience evidence, not a distributed network-partition proof.

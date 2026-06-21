@@ -23,7 +23,9 @@ REQUIRED_FILES = [
     "docs/submission-readiness-matrix.md",
     "docs/cu-costs.md",
     "docs/three-use-cases.md",
+    "docs/resilience-evidence.md",
     "scripts/run_three_use_cases_demo.sh",
+    "scripts/run_resilience_evidence.sh",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -84,6 +86,18 @@ REQUIRED_PHRASES = {
         "payment_submitted",
         "summary.json",
     ],
+    "docs/resilience-evidence.md": [
+        "pending approval persistence",
+        "timeout/fail-closed",
+        "Skill failure isolation",
+        "Strict boundary",
+    ],
+    "scripts/run_resilience_evidence.sh": [
+        "ASSERT resilience",
+        "approval_expired",
+        "unknown_skill",
+        "summary.json",
+    ],
     "scaffold.toml": [
         "[modules.agent_module]",
         "path:.#lgx",
@@ -137,7 +151,7 @@ def main() -> int:
     if not final_gate.exists():
         fail("missing final pre-video evidence gate")
     gate_text = final_gate.read_text(errors="ignore")
-    for needle in ["run_logoscore_integration.sh all", "run_lp0008_deep_verify.py", "run_multi_agent_a2a_demo.sh", "run_three_use_cases_demo.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
+    for needle in ["run_logoscore_integration.sh all", "run_lp0008_deep_verify.py", "run_multi_agent_a2a_demo.sh", "run_three_use_cases_demo.sh", "run_resilience_evidence.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
         if needle not in gate_text:
             fail(f"final evidence gate missing {needle}")
 
