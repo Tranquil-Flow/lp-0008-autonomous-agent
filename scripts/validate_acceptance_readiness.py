@@ -20,6 +20,7 @@ REQUIRED_FILES = [
     "docs/upstream/program-live-api.md",
     "docs/final-video-audio-narration.md",
     "docs/strict-success-criteria-evidence.md",
+    "docs/submission-readiness-matrix.md",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -55,8 +56,14 @@ REQUIRED_PHRASES = {
     "docs/strict-success-criteria-evidence.md": [
         "scripts/run_final_pre_video_evidence.sh",
         "Three separate agents",
-        "Pending final narrated recording only",
+        "**not** a final acceptance claim",
         "5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3",
+    ],
+    "docs/submission-readiness-matrix.md": [
+        "not ready for final Lambda Prize submission yet",
+        "Basecamp owner-channel",
+        "Publish/discover cards and task envelopes over Logos Messaging transport",
+        "CU cost documented",
     ],
     "scaffold.toml": [
         "[modules.agent_module]",
@@ -116,14 +123,11 @@ def main() -> int:
             fail(f"final evidence gate missing {needle}")
 
     submission = (ROOT/"SUBMISSION.md").read_text(errors="ignore")
-    unchecked = [line for line in submission.splitlines() if line.startswith("- [ ]")]
-    if unchecked:
-        fail("unchecked public success criteria remain: " + "; ".join(unchecked))
+    for phrase in ["not final-submission-ready yet", "Basecamp artifact readiness only", "Autonomous inter-agent LEZ payment tied to task acceptance is not yet proven"]:
+        if phrase not in submission:
+            fail(f"SUBMISSION.md missing honest no-go phrase: {phrase}")
 
-    if "pending fresh recording" not in submission:
-        fail("SUBMISSION.md must keep the video as the explicit final pending artifact until URL is added")
-
-    print("acceptance_readiness_ok")
+    print("submission_honesty_ok")
     return 0
 
 if __name__ == "__main__":

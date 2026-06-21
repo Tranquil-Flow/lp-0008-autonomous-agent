@@ -1,6 +1,6 @@
 # LP-0008 strict success-criteria evidence map
 
-This file maps each LP-0008 success criterion to a command, artifact, or honest boundary. It is intended for reviewers and for the final pre-video checklist.
+This file maps current LP-0008 evidence to success criteria and honest boundaries. It is **not** a final acceptance claim; see `docs/submission-readiness-matrix.md` for the current no-go items.
 
 ## Final pre-video gate
 
@@ -44,7 +44,15 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 | Three separate agents | `scripts/run_multi_agent_a2a_demo.sh` configures Alpha Storage, Beta Messaging, and Gamma Chain identities with separate Agent Cards, task topics, owner topics, and roles. |
 | Documentation and clean repo | README, SUBMISSION, this evidence map, dependency policy, upstream-gap docs, CI workflow, MIT license. |
 | CI green | GitHub Actions builds and runs `demo.sh` on Linux. Linux wallet bridge fails closed instead of pretending Darwin wallet FFI is available. |
-| Video | Pending final narrated recording only. |
+| Video | Not ready for final recording until strict gaps in `docs/submission-readiness-matrix.md` are closed or accepted as residual risk. |
+
+## Current no-go items
+
+- Separate Logos app/Basecamp owner-channel interaction is not yet proven.
+- Above-threshold owner approval/reject retry/timeout flow is not yet implemented.
+- A2A task transport over Logos Messaging with task-linked LEZ payment is not yet proven.
+- Three separate LEZ testnet agent deployments and three full testnet use cases are not yet proven.
+- CU cost and `RISC0_DEV_MODE=0`/proof-generation evidence remain to be completed or bounded.
 
 ## Honest boundaries
 

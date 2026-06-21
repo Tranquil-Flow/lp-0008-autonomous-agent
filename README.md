@@ -2,6 +2,13 @@
 
 An autonomous AI agent module for the Logos blockchain ecosystem. The agent holds its own shielded LEZ wallet, stores and retrieves files via Logos Storage, communicates over Logos Messaging, coordinates with other agents via the A2A protocol, and enforces owner-configured spending thresholds.
 
+
+## Current submission-readiness status
+
+This repository is under active strict LP-0008 completion work. CI and local validators prove repository hygiene, module buildability, raw C ABI behavior, Logos Core co-load, and wallet/storage/messaging primitives. They do **not** by themselves prove final Lambda Prize acceptance.
+
+Before final submission, the remaining strict gaps in `docs/submission-readiness-matrix.md` must be closed or explicitly accepted as residual risk: Basecamp owner-channel interaction, owner approval retry/timeout flow, Logos Messaging A2A transport with LEZ payment, three separate testnet agents/use cases, CU documentation, and proof-mode/video evidence.
+
 ## Architecture
 
 ```

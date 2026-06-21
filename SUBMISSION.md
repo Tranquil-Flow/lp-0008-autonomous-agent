@@ -4,7 +4,7 @@
 
 ## Summary
 
-A Logos Core module implementing an autonomous AI agent with 23 skills across six categories: meta (self-management), storage (Logos Storage), messaging (Logos Messaging), wallet (LEZ), program (LEZ programs), and agent (A2A-compatible inter-agent coordination). The module features a configurable spending threshold mechanism that blocks over-limit transactions, file-backed persistence for cross-process state, and a pluggable skill registry for third-party skill development.
+A Logos Core module prototype implementing an autonomous AI agent dispatch surface with 23 skills across six categories: meta (self-management), storage (Logos Storage), messaging (Logos Messaging), wallet (LEZ), program (LEZ programs), and agent (A2A-compatible inter-agent coordination). The module features a configurable spending threshold mechanism that currently blocks over-limit transactions, file-backed persistence for cross-process state, and a pluggable skill registry foundation. Strict final-submission gaps are tracked in `docs/submission-readiness-matrix.md`.
 
 The module is built with the Logos module-builder toolchain, packaged as a dynamically loadable `.lgx` module, and verified through a standalone C ABI test harness that exercises all 23 skills through the raw `logos_module_dispatch` entry point — bypassing the logoscore CLI display layer for truthful return value verification.
 
@@ -46,19 +46,21 @@ A centralized alternative (e.g., AWS + Stripe + S3 + Slack) would require trusti
 - **Synchronous delivery receive.** The delivery module exposes `messageReceived` events but no synchronous receive/poll query API callable by another headless module. LP-0008 therefore proves `agent.receive` through persisted inbox polling and documents the upstream API needed for live receive polling.
 - **logoscore CLI for verification.** The CLI's `QVariant::toBool()` display quirk made all JSON returns appear as `false`. Solved by building a direct C ABI test harness.
 
-## Success Criteria Checklist
+## Strict Success-Criteria Status
 
-- [x] The agent module loads and runs inside Logos Core alongside the wallet, storage, and messaging modules without requiring modifications to those modules. — Built as standalone `.lgx` module, loads via `logoscore -m ./result/modules -l agent_module`.
-- [x] The agent has its own shielded LEZ account and can send and receive tokens independently of the owner's wallet. — Wallet FFI creates a real shielded testnet account, rc3 Pinata faucet funding is proven, and `scripts/run_live_wallet_send_verify.py` submits a funded send through the agent wallet FFI, confirms the transaction on public testnet, and observes balance decrease.
-- [x] The owner can deploy the agent and configure it with a single CLI command on any machine using Logos Core headless. — `logoscore -m ./result/modules -l agent_module` loads the agent. `meta.configure` adjusts runtime config.
-- [x] The owner can interact with the agent in real time from a separate Logos client process using Logos Messaging, with no intermediary server. — `scripts/run_logoscore_integration.sh stage-c` starts a headless Logos Core daemon and sends a valid LIP-23 message through `delivery_module` from a separate `logoscore` client process. `agent.receive` remains persisted-inbox polling until delivery exposes a synchronous receive/poll query API; the boundary is documented in `docs/upstream/delivery-receive-poll-api.md`.
-- [x] The spending threshold mechanism correctly holds above-threshold transactions for owner approval and executes below-threshold transactions autonomously. — Verified in demo: 10-unit transfer approved, 390625000-unit transfer blocked with `exceeds_per_tx_limit`.
-- [x] All default skills listed above are implemented and documented. — All 23 skills verified via C ABI harness. Each returns structured JSON with correct fields.
-- [x] Agent-to-agent coordination is A2A-compatible: Agent Cards follow the A2A schema, task interactions follow the A2A task lifecycle. — `agent.card()` returns A2A-compliant JSON with `protocol: "a2a"`, `protocolVersion: "1.0"`, payment, skills array. Task lifecycle: `agent.task` persists queued->working->completed/failed events while executing the requested skill, `agent.subscribe` reads back persisted status/result, `agent.complete` can finalize a stored task with a result payload, and `agent.cancel` refuses to mutate terminal tasks.
-- [x] Two or more agents can discover each other via Agent Cards and execute a task following the A2A lifecycle. — The multi-agent C ABI demo verifies three configured agents, discovery, delegated skill execution through `agent.receive`, subscribe readback, and terminal-state cancel guard.
-- [x] At least 3 illustrative use cases are demonstrated with Logos Core/testnet evidence. — Personal file vault is covered by live storage upload/download/list/share; agent services marketplace is covered by Agent Cards, discovery, and task subscription; multi-agent workflow is covered by Alpha/Beta/Gamma delegated task execution. Live LEZ wallet-send evidence proves the chain/payment primitive used by paid agent services. Program calls/deploys fail closed until a module-safe LEZ program SDK/C ABI exists.
-- [x] Three separate agents are deployed/configured in the Logos Core runtime — one per default skill category. — `scripts/run_multi_agent_a2a_demo.sh` configures Alpha Storage, Beta Messaging, and Gamma Chain with separate Agent Cards, task topics, owner topics, and roles; live LEZ wallet funding/send is proven separately by `scripts/run_live_wallet_send_verify.py`.
-- [x] Full documentation — including the skill interface spec, deployment guide, and owner interaction guide — and a clean public repository are delivered. — README.md with architecture, skill interface, deployment guide. MIT LICENSE. CI workflow.
+This repository is **not final-submission-ready yet**. The table below intentionally separates working evidence from strict LP-0008 acceptance. See `docs/submission-readiness-matrix.md` for the full criterion-by-criterion matrix.
+
+- **Partial:** Logos Core co-load with storage/delivery is verified; wallet FFI proof is Darwin/public-testnet specific and Linux fails closed rather than pretending success.
+- **Partial:** A real rc3 shielded wallet send is proven on public testnet with tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`; receive-token evidence and platform limits still need final proof.
+- **Partial:** Headless CLI build/load/configuration works, but "any machine" is limited by wallet FFI/platform prerequisites.
+- **Not yet met:** Separate Logos app/Basecamp owner-channel interaction has not been recorded or proven; current evidence is Basecamp artifact readiness only.
+- **Partial:** Spending threshold currently permits below-limit sends and blocks above-limit sends; owner notification, approve/reject, retry, and timeout state machine still need implementation.
+- **Partial:** All 23 dispatch handlers exist and return structured JSON, but strict-live semantics remain incomplete for program operations, some messaging group paths, sharing, and wallet history/source-of-truth.
+- **Partial:** Agent Cards and task lifecycle are implemented locally; A2A discovery/task transport over Logos Messaging still needs proof.
+- **Not yet met:** Autonomous inter-agent LEZ payment tied to task acceptance is not yet proven.
+- **Not yet met:** Three illustrative use cases are not yet fully demonstrated end-to-end on LEZ testnet.
+- **Not yet met:** Three separate LEZ testnet agent deployments by category are not yet proven.
+- **Partial:** Documentation and repo hygiene are strong; final owner-channel, CU, RISC0/proof-mode, and video docs remain.
 
 ## FURPS Self-Assessment
 
@@ -104,11 +106,11 @@ All 23 spec skills are implemented and verified through the C ABI harness:
 
 ## Supporting Materials
 
-- **Demo script:** `demo.sh` — runs all 23 skills with assertions
+- **Demo script:** `demo.sh` — runs all 23 dispatch handlers with assertions; this is a module smoke test, not complete strict LP-0008 acceptance proof
 - **C ABI test harness:** `tests/cabi_call.cpp` — direct dlopen verification
 - **Final pre-video evidence gate:** `scripts/run_final_pre_video_evidence.sh` — latest M4 Pro run completed with `PRE_VIDEO_EVIDENCE_OK`, including public-testnet wallet tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` and balance `149 -> 144`.
 - **Architecture diagram:** README.md
-- **Video demo:** pending fresh recording before public PR submission — this is the only remaining publication artifact after `scripts/run_final_pre_video_evidence.sh` passes.
+- **Video demo:** not ready to record as final submission evidence until the strict gaps in `docs/submission-readiness-matrix.md` are closed or explicitly accepted as residual risk.
 
 ## Terms & Conditions
 
