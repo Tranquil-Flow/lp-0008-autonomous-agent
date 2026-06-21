@@ -42,8 +42,11 @@ scripts/run_logoscore_integration.sh all
 say "Deep verifier: live storage, live delivery, live A2A task transport"
 scripts/run_lp0008_deep_verify.py
 
-say "Three-agent A2A / illustrative use cases control-plane proof"
+say "Three-agent A2A control-plane proof"
 scripts/run_multi_agent_a2a_demo.sh
+
+say "Three illustrative use cases proof"
+scripts/run_three_use_cases_demo.sh
 
 say "Reviewer-facing readiness validator"
 scripts/validate_acceptance_readiness.py

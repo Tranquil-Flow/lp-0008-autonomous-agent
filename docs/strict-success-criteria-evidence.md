@@ -64,3 +64,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 ## CU/proof-mode documentation
 
 `docs/cu-costs.md` documents current CU/proof boundaries: public-testnet wallet tx evidence exists, current rc3 wallet output does not expose a stable CU field, and `program.call`/`program.deploy` submit no transaction because they fail closed.
+
+## Three illustrative use cases
+
+`scripts/run_three_use_cases_demo.sh` exercises personal file vault, agent services marketplace payment-hook, and multi-agent workflow evidence, writing `summary.json` under the evidence directory. This is partial strict evidence: live A2A transport is separately proven by deep verify, while live inter-agent LEZ payment remains bounded by the wallet evidence path.

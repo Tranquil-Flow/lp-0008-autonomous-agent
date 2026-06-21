@@ -22,6 +22,8 @@ REQUIRED_FILES = [
     "docs/strict-success-criteria-evidence.md",
     "docs/submission-readiness-matrix.md",
     "docs/cu-costs.md",
+    "docs/three-use-cases.md",
+    "scripts/run_three_use_cases_demo.sh",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -70,6 +72,17 @@ REQUIRED_PHRASES = {
         "CU cost and proof-mode notes",
         "CU field not exposed",
         "RISC0_DEV_MODE=0 boundary",
+    ],
+    "docs/three-use-cases.md": [
+        "personal file vault",
+        "agent services marketplace",
+        "multi-agent workflow",
+        "Strict boundary",
+    ],
+    "scripts/run_three_use_cases_demo.sh": [
+        "ASSERT three illustrative use cases",
+        "payment_submitted",
+        "summary.json",
     ],
     "scaffold.toml": [
         "[modules.agent_module]",
@@ -124,7 +137,7 @@ def main() -> int:
     if not final_gate.exists():
         fail("missing final pre-video evidence gate")
     gate_text = final_gate.read_text(errors="ignore")
-    for needle in ["run_logoscore_integration.sh all", "run_lp0008_deep_verify.py", "run_multi_agent_a2a_demo.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
+    for needle in ["run_logoscore_integration.sh all", "run_lp0008_deep_verify.py", "run_multi_agent_a2a_demo.sh", "run_three_use_cases_demo.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
         if needle not in gate_text:
             fail(f"final evidence gate missing {needle}")
 
