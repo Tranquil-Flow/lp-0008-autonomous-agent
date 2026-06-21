@@ -109,6 +109,16 @@ scripts/run_multi_agent_a2a_demo.sh
 
 That harness configures Alpha/Beta/Gamma identities, publishes their Agent Cards, verifies discovery returns all three, and exercises a delegated task lifecycle (`working -> subscribed -> cancelled`).
 
+### Basecamp readiness
+
+The repository includes `scaffold.toml` with `[modules.agent_module] = path:.#lgx`, so reviewers can inspect or prepare a Basecamp install path with `lgs basecamp modules --show`. The `.lgx` artifact is verified with:
+
+```bash
+nix build .#lgx --out-link result-lgx
+```
+
+This is a compatibility/evidence path, not a GUI claim: the final submission video should not claim Basecamp GUI interaction unless a real `lgs basecamp install/launch` session is recorded separately.
+
 Defaults match the M4 Pro Basecamp workspace. Override paths when needed:
 
 ```bash

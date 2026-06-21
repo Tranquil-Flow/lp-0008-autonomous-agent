@@ -13,8 +13,9 @@ Show these claims only:
 - A2A task intake uses `agent.receive` with persisted inbox polling.
 - Wallet balance/history and funded wallet-send use live LEZ wallet FFI against public testnet when a funded rc3 wallet is mounted.
 - Program query is simulated; `program.call` and `program.deploy` fail closed because Logos Core exposes no module-safe LEZ program SDK/C ABI yet.
+- Optional Basecamp CLI readiness may be shown by displaying `scaffold.toml`, `lgs basecamp modules --show`, and `nix build .#lgx`; this is artifact readiness, not GUI interaction proof.
 
-Do not claim GUI/Basecamp evidence or live program execution.
+Do not claim GUI/Basecamp evidence or live program execution unless a real Basecamp launch/install session is separately recorded.
 
 ## Recording command
 
@@ -35,6 +36,11 @@ git ls-remote origin refs/heads/feat/real-lez-wallet | cut -f1
 
 echo "## Build"
 nix build .#install --out-link result
+
+echo "## Optional Basecamp CLI readiness"
+sed -n '1,80p' scaffold.toml
+lgs basecamp modules --show
+nix build .#lgx --out-link result-lgx
 
 echo "## Core demo"
 bash demo.sh

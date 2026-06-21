@@ -20,6 +20,7 @@ REQUIRED_FILES = [
     "docs/upstream/program-live-api.md",
     "docs/final-video-audio-narration.md",
     "docs/strict-success-criteria-evidence.md",
+    "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
     (re.compile(r"\b21 methods\b", re.I), "stale 21-method wording"),
@@ -56,6 +57,11 @@ REQUIRED_PHRASES = {
         "Three separate agents",
         "Pending final narrated recording only",
         "5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3",
+    ],
+    "scaffold.toml": [
+        "[modules.agent_module]",
+        "path:.#lgx",
+        "role = \"project\"",
     ],
 }
 

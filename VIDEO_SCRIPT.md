@@ -46,6 +46,22 @@ Narration cue:
 
 "The module builds through Nix and the Logos module-builder path. The result contains the loadable agent module artifact used by Logos Core and by the raw C ABI harness."
 
+## Optional Scene 2b — Basecamp CLI readiness, 30 sec
+
+Include this if you want to show Basecamp preparedness without claiming GUI interaction.
+
+On screen:
+
+```bash
+sed -n '1,80p' scaffold.toml
+lgs basecamp modules --show
+nix build .#lgx --out-link result-lgx
+```
+
+Narration cue:
+
+"The project is also Basecamp-ready at the CLI artifact level: `scaffold.toml` captures `agent_module` as `path:.#lgx`, and the `.lgx` artifact builds. I am not claiming a GUI/Basecamp interaction here; the tested runtime evidence remains the Logos Core and C ABI paths shown next."
+
 ## Scene 3 — core all-skill demo, 90 sec
 
 On screen:
