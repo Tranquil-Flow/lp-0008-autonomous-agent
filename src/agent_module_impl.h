@@ -60,6 +60,10 @@ public:
     std::string walletBalance();
     std::string walletSend(const std::string& recipient, const std::string& amountLe16);
     std::string walletHistory();
+    std::string approvalList();
+    std::string approvalApprove(const std::string& approvalId);
+    std::string approvalReject(const std::string& approvalId, const std::string& reason);
+    std::string approvalRetry(const std::string& approvalId);
 
     // === Program Skills ===
     std::string programQuery(const std::string& programId, const std::string& params);
@@ -99,4 +103,6 @@ private:
     bool ensureDeliveryReady();
     bool tryStorageCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);
     bool tryDeliveryCall(const std::string& method, const nlohmann::json& args, nlohmann::json& out);
+    nlohmann::json executeWalletTransfer(const std::string& recipient, const std::string& amountLe16, const std::string& approvalId = "");
+    nlohmann::json notifyOwnerApproval(const nlohmann::json& approval, const std::string& event);
 };

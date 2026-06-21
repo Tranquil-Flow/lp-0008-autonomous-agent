@@ -37,6 +37,7 @@ std::string messagesPath()    { return ensureDir() + "/messages.json"; }
 std::string groupsPath()      { return ensureDir() + "/groups.json"; }
 std::string discoveryPath()   { return ensureDir() + "/discovery.json"; }
 std::string tasksPath()       { return ensureDir() + "/tasks.json"; }
+std::string approvalsPath()   { return ensureDir() + "/approvals.json"; }
 std::string configPath()      { return ensureDir() + "/config.json"; }
 
 nlohmann::json loadJsonFile(const std::string& path)

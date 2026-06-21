@@ -69,6 +69,9 @@ json argsForSkill(const std::string& skill, const std::string& params)
     if (skill == "storage.download") return json::array({parsed.value("address", ""), parsed.value("path", "")});
     if (skill == "storage.share") return json::array({parsed.value("address", ""), parsed.value("recipient", "")});
     if (skill == "wallet.send") return json::array({parsed.value("recipient", ""), parsed.value("amount_le16", "")});
+    if (skill == "approval.approve") return json::array({parsed.value("approval_id", "")});
+    if (skill == "approval.reject") return json::array({parsed.value("approval_id", ""), parsed.value("reason", "owner_rejected")});
+    if (skill == "approval.retry") return json::array({parsed.value("approval_id", "")});
     if (skill == "program.query") return json::array({parsed.value("program_id", ""), parsed.value("params", "{}")});
     if (skill == "program.call") return json::array({parsed.value("program_id", ""), parsed.value("instruction", ""), parsed.value("params", "{}")});
     if (skill == "program.deploy") return json::array({parsed.value("binary_path", "")});
@@ -103,6 +106,10 @@ AgentModuleImpl::AgentModuleImpl()
     reg.addMeta("wallet.balance", "wallet", "Return the agent's current shielded token balance", "{}", R"({"balance":"..."})");
     reg.addMeta("wallet.send", "wallet", "Send tokens; enforce spending threshold", R"({"recipient":"0x...","amount_le16":"..."})", R"({"tx_hash":"...","approved":true})");
     reg.addMeta("wallet.history", "wallet", "Return summary of recent transactions", "{}", R"({"transactions":[...]})");
+    reg.addMeta("approval.list", "wallet", "List pending and completed owner approvals", "{}", R"({"approvals":[...]})");
+    reg.addMeta("approval.approve", "wallet", "Owner approval: execute a pending above-threshold wallet send", R"({"approval_id":"appr-..."})", R"({"approved":true,"executed":true})");
+    reg.addMeta("approval.reject", "wallet", "Owner approval: reject a pending above-threshold wallet send", R"({"approval_id":"appr-...","reason":"..."})", R"({"rejected":true})");
+    reg.addMeta("approval.retry", "wallet", "Retry or timeout owner notification for a pending approval", R"({"approval_id":"appr-..."})", R"({"notified":true})");
     // Program
     reg.addMeta("program.query", "program", "Read state from a LEZ program", R"({"program_id":"0x...","params":"{}"})", R"({"result":"..."})");
     reg.addMeta("program.call", "program", "Submit a transaction to a LEZ program; subject to spending threshold", R"({"program_id":"0x...","instruction":"vote","params":"{}"})", R"({"tx_hash":"..."})");
@@ -137,6 +144,11 @@ void AgentModuleImpl::ensureWallet()
 {
     if (m_walletTried) return;
     m_walletTried = true;
+
+    const char* disableWalletFfi = std::getenv("LP0008_DISABLE_WALLET_FFI");
+    if (disableWalletFfi && std::string(disableWalletFfi) == "1") {
+        return;
+    }
 
     auto& cfg = agentConfig();
     const std::string walletDir = agent_persistence::stateDir() + "/wallet";
@@ -269,6 +281,10 @@ std::string AgentModuleImpl::dispatchSkill(const std::string& skill_name, const 
         if (skill_name == "wallet.balance")  return walletBalance();
         if (skill_name == "wallet.send")     return walletSend(s(0), s(1));
         if (skill_name == "wallet.history")  return walletHistory();
+        if (skill_name == "approval.list")   return approvalList();
+        if (skill_name == "approval.approve") return approvalApprove(s(0));
+        if (skill_name == "approval.reject") return approvalReject(s(0), s(1));
+        if (skill_name == "approval.retry")  return approvalRetry(s(0));
 
         if (skill_name == "program.query")   return programQuery(s(0), s(1));
         if (skill_name == "program.call")    return programCall(s(0), s(1), s(2));
@@ -755,21 +771,9 @@ std::string AgentModuleImpl::walletBalance()
     return r.dump();
 }
 
-std::string AgentModuleImpl::walletSend(const std::string& recipient, const std::string& amountLe16)
+json AgentModuleImpl::executeWalletTransfer(const std::string& recipient, const std::string& amountLe16, const std::string& approvalId)
 {
     ensureWallet();
-    auto& gate = spendingGate();
-
-    // Check spending threshold
-    auto checkResult = json::parse(gate.checkSpend(amountLe16));
-    if (!checkResult.value("allowed", false)) {
-        json r;
-        r["approved"] = false;
-        r["reason"] = checkResult.value("reason", "unknown");
-        r["amount"] = checkResult.value("amount", amountLe16);
-        r["action"] = "owner_approval_required";
-        return r.dump();
-    }
 
     const auto ts = std::chrono::duration_cast<std::chrono::seconds>(
         std::chrono::system_clock::now().time_since_epoch()).count();
@@ -780,7 +784,6 @@ std::string AgentModuleImpl::walletSend(const std::string& recipient, const std:
     if (m_wallet.live() && !m_agentAccount.empty()) {
         // Real path: deshielded transfer from the agent's shielded account to
         // the public recipient. Emits a RISC0 proof under RISC0_DEV_MODE=0.
-        // Sync first so copied/mounted wallets do not spend stale private state.
         m_wallet.syncToCurrentBlock();
         auto amt = agent::WalletBridge::le16FromHex(amountLe16);
         auto res = m_wallet.transferDeshielded(m_agentAccount, recipient, amt);
@@ -793,7 +796,7 @@ std::string AgentModuleImpl::walletSend(const std::string& recipient, const std:
         mode = "simulated";
         submitted = true;
         txHash = "0x" + std::to_string(std::hash<std::string>{}(
-            recipient + amountLe16 + std::to_string(ts)));
+            recipient + amountLe16 + approvalId + std::to_string(ts)));
     }
 
     json r;
@@ -802,29 +805,228 @@ std::string AgentModuleImpl::walletSend(const std::string& recipient, const std:
     r["amount"] = amountLe16;
     r["recipient"] = recipient;
     r["mode"] = mode;
+    if (!approvalId.empty()) r["approval_id"] = approvalId;
 
     if (submitted) {
-        // Only count the spend against the period budget once it actually went out.
-        gate.recordSpend(amountLe16);
+        spendingGate().recordSpend(amountLe16);
         r["tx_hash"] = txHash;
 
         auto wallet = agent_persistence::loadJsonFile(agent_persistence::walletPath());
         if (!wallet.is_object()) wallet = json::object();
         auto history = wallet.value("history", json::array());
         json tx;
-        tx["type"] = "send";
+        tx["type"] = approvalId.empty() ? "send" : "approved_send";
         tx["recipient"] = recipient;
         tx["amount"] = amountLe16;
         tx["tx_hash"] = txHash;
         tx["mode"] = mode;
         tx["timestamp"] = ts;
+        if (!approvalId.empty()) tx["approval_id"] = approvalId;
         history.push_back(tx);
         wallet["history"] = history;
         agent_persistence::saveJsonFile(agent_persistence::walletPath(), wallet);
     } else {
         r["error"] = error;
     }
+    return r;
+}
+
+json AgentModuleImpl::notifyOwnerApproval(const json& approval, const std::string& event)
+{
+    json envelope;
+    envelope["type"] = "agent.approval." + event;
+    envelope["approval_id"] = approval.value("approval_id", "");
+    envelope["agent_id"] = agentConfig().agent_id;
+    envelope["recipient"] = approval.value("recipient", "");
+    envelope["amount_le16"] = approval.value("amount_le16", "");
+    envelope["reason"] = approval.value("reason", "");
+    envelope["status"] = approval.value("status", "pending");
+    envelope["attempts"] = approval.value("notification_attempts", 0);
+    envelope["created_at"] = approval.value("created_at", 0LL);
+    envelope["expires_at"] = approval.value("expires_at", 0LL);
+
+    json r = parseJsonOrString(messagingSend(agentConfig().owner_topic, envelope.dump()));
+    if (!r.is_object()) r = json{{"sent", false}, {"raw", r}};
+    r["owner_topic"] = agentConfig().owner_topic;
+    r["event"] = event;
+    return r;
+}
+
+std::string AgentModuleImpl::walletSend(const std::string& recipient, const std::string& amountLe16)
+{
+    ensureWallet();
+    auto& gate = spendingGate();
+
+    auto checkResult = json::parse(gate.checkSpend(amountLe16));
+    if (!checkResult.value("allowed", false)) {
+        auto approvals = agent_persistence::loadJsonFile(agent_persistence::approvalsPath());
+        if (!approvals.is_array()) approvals = json::array();
+
+        const auto now = nowMillis();
+        const std::string approvalId = "appr-" + std::to_string(now) + "-" + std::to_string(approvals.size());
+        json approval;
+        approval["approval_id"] = approvalId;
+        approval["status"] = "pending";
+        approval["recipient"] = recipient;
+        approval["amount_le16"] = amountLe16;
+        approval["amount"] = checkResult.value("amount", amountLe16);
+        approval["reason"] = checkResult.value("reason", "unknown");
+        approval["owner_topic"] = agentConfig().owner_topic;
+        approval["created_at"] = now;
+        approval["updated_at"] = now;
+        approval["expires_at"] = now + 300000; // five-minute default timeout for reviewer-visible safety
+        approval["notification_attempts"] = 1;
+        approval["events"] = json::array({json{{"status", "pending"}, {"at", now}}, json{{"status", "notified"}, {"at", now}}});
+
+        json notify = notifyOwnerApproval(approval, "request");
+        approval["last_notification"] = notify;
+        approvals.push_back(approval);
+        agent_persistence::saveJsonFile(agent_persistence::approvalsPath(), approvals);
+
+        json r;
+        r["approved"] = false;
+        r["reason"] = approval["reason"];
+        r["amount"] = approval["amount"];
+        r["action"] = "owner_approval_required";
+        r["approval_id"] = approvalId;
+        r["owner_topic"] = agentConfig().owner_topic;
+        r["notification"] = notify;
+        r["expires_at"] = approval["expires_at"];
+        return r.dump();
+    }
+
+    return executeWalletTransfer(recipient, amountLe16).dump();
+}
+
+
+std::string AgentModuleImpl::approvalList()
+{
+    auto approvals = agent_persistence::loadJsonFile(agent_persistence::approvalsPath());
+    if (!approvals.is_array()) approvals = json::array();
+    json r;
+    r["approvals"] = approvals;
+    r["count"] = approvals.size();
     return r.dump();
+}
+
+std::string AgentModuleImpl::approvalApprove(const std::string& approvalId)
+{
+    auto approvals = agent_persistence::loadJsonFile(agent_persistence::approvalsPath());
+    if (!approvals.is_array()) approvals = json::array();
+    const auto now = nowMillis();
+
+    for (auto& approval : approvals) {
+        if (approval.value("approval_id", "") != approvalId) continue;
+        json r;
+        r["approval_id"] = approvalId;
+        const std::string status = approval.value("status", "pending");
+        if (status != "pending") {
+            r["approved"] = false;
+            r["executed"] = false;
+            r["error"] = "approval_not_pending";
+            r["status"] = status;
+            return r.dump();
+        }
+        if (approval.value("expires_at", 0LL) > 0 && now > approval.value("expires_at", 0LL)) {
+            approval["status"] = "timed_out";
+            approval["updated_at"] = now;
+            approval["events"].push_back(json{{"status", "timed_out"}, {"at", now}});
+            agent_persistence::saveJsonFile(agent_persistence::approvalsPath(), approvals);
+            r["approved"] = false;
+            r["executed"] = false;
+            r["error"] = "approval_expired";
+            r["status"] = "timed_out";
+            return r.dump();
+        }
+
+        json exec = executeWalletTransfer(approval.value("recipient", ""), approval.value("amount_le16", ""), approvalId);
+        bool submitted = exec.value("submitted", false);
+        approval["status"] = submitted ? "executed" : "execution_failed";
+        approval["updated_at"] = now;
+        approval["execution"] = exec;
+        approval["events"].push_back(json{{"status", "owner_approved"}, {"at", now}});
+        approval["events"].push_back(json{{"status", approval["status"]}, {"at", now}});
+        agent_persistence::saveJsonFile(agent_persistence::approvalsPath(), approvals);
+
+        r["approved"] = true;
+        r["executed"] = submitted;
+        r["status"] = approval["status"];
+        r["execution"] = exec;
+        return r.dump();
+    }
+
+    return json{{"approved", false}, {"executed", false}, {"error", "approval_not_found"}, {"approval_id", approvalId}}.dump();
+}
+
+std::string AgentModuleImpl::approvalReject(const std::string& approvalId, const std::string& reason)
+{
+    auto approvals = agent_persistence::loadJsonFile(agent_persistence::approvalsPath());
+    if (!approvals.is_array()) approvals = json::array();
+    const auto now = nowMillis();
+    for (auto& approval : approvals) {
+        if (approval.value("approval_id", "") != approvalId) continue;
+        json r;
+        r["approval_id"] = approvalId;
+        const std::string status = approval.value("status", "pending");
+        if (status != "pending") {
+            r["rejected"] = false;
+            r["error"] = "approval_not_pending";
+            r["status"] = status;
+            return r.dump();
+        }
+        approval["status"] = "rejected";
+        approval["reject_reason"] = reason.empty() ? "owner_rejected" : reason;
+        approval["updated_at"] = now;
+        approval["events"].push_back(json{{"status", "owner_rejected"}, {"at", now}});
+        agent_persistence::saveJsonFile(agent_persistence::approvalsPath(), approvals);
+        r["rejected"] = true;
+        r["status"] = "rejected";
+        r["reason"] = approval["reject_reason"];
+        return r.dump();
+    }
+    return json{{"rejected", false}, {"error", "approval_not_found"}, {"approval_id", approvalId}}.dump();
+}
+
+std::string AgentModuleImpl::approvalRetry(const std::string& approvalId)
+{
+    auto approvals = agent_persistence::loadJsonFile(agent_persistence::approvalsPath());
+    if (!approvals.is_array()) approvals = json::array();
+    const auto now = nowMillis();
+    for (auto& approval : approvals) {
+        if (approval.value("approval_id", "") != approvalId) continue;
+        json r;
+        r["approval_id"] = approvalId;
+        const std::string status = approval.value("status", "pending");
+        if (status != "pending") {
+            r["notified"] = false;
+            r["status"] = status;
+            r["error"] = "approval_not_pending";
+            return r.dump();
+        }
+        if (approval.value("expires_at", 0LL) > 0 && now > approval.value("expires_at", 0LL)) {
+            approval["status"] = "timed_out";
+            approval["updated_at"] = now;
+            approval["events"].push_back(json{{"status", "timed_out"}, {"at", now}});
+            agent_persistence::saveJsonFile(agent_persistence::approvalsPath(), approvals);
+            r["notified"] = false;
+            r["status"] = "timed_out";
+            r["error"] = "approval_expired";
+            return r.dump();
+        }
+        int attempts = approval.value("notification_attempts", 0) + 1;
+        approval["notification_attempts"] = attempts;
+        approval["updated_at"] = now;
+        approval["events"].push_back(json{{"status", "notification_retry"}, {"at", now}});
+        json notify = notifyOwnerApproval(approval, "retry");
+        approval["last_notification"] = notify;
+        agent_persistence::saveJsonFile(agent_persistence::approvalsPath(), approvals);
+        r["notified"] = notify.value("sent", false);
+        r["status"] = "pending";
+        r["notification_attempts"] = attempts;
+        r["notification"] = notify;
+        return r.dump();
+    }
+    return json{{"notified", false}, {"error", "approval_not_found"}, {"approval_id", approvalId}}.dump();
 }
 
 std::string AgentModuleImpl::walletHistory()

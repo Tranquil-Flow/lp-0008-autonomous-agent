@@ -49,7 +49,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 ## Current no-go items
 
 - Separate Logos app/Basecamp owner-channel interaction is not yet proven.
-- Above-threshold owner approval/reject retry/timeout flow is not yet implemented.
+- Above-threshold owner approval/reject retry/timeout flow is implemented at module level: `wallet.send` creates persisted pending approvals and owner-topic notifications; `approval.retry`, `approval.reject`, and `approval.approve` are verified by `demo.sh`. Remaining risk: reviewer-facing Basecamp UI/channel proof is still pending.
 - A2A task transport over Logos Messaging with task-linked LEZ payment is not yet proven.
 - Three separate LEZ testnet agent deployments and three full testnet use cases are not yet proven.
 - CU cost and `RISC0_DEV_MODE=0`/proof-generation evidence remain to be completed or bounded.

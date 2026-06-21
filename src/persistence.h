@@ -18,6 +18,7 @@ std::string messagesPath();
 std::string groupsPath();
 std::string discoveryPath();
 std::string tasksPath();
+std::string approvalsPath();
 std::string configPath();
 
 // JSON file helpers

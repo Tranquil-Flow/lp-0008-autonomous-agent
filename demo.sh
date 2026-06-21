@@ -5,6 +5,9 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT"
 
 export AGENT_MODULE_STATE_DIR="${AGENT_MODULE_STATE_DIR:-$ROOT/.demo-state}"
+# Keep the generic smoke demo deterministic. The opt-in live wallet verifier
+# exercises the real FFI/testnet path with a funded mounted wallet.
+export LP0008_DISABLE_WALLET_FFI="${LP0008_DISABLE_WALLET_FFI:-1}"
 CALLER="$ROOT/.demo-state/cabi_call"
 PLUGIN="$ROOT/result/modules/agent_module/agent_module_plugin.dylib"
 if [ ! -f "$PLUGIN" ]; then
@@ -134,14 +137,37 @@ assert wallet.balance .balance '"0"'
 # harness proves here is the autonomous spending-gate approval path.
 # LE16 for 10 decimal
 SMALL='0a000000000000000000000000000000'
-call wallet.send "[\"0x-recipient\",\"$SMALL\"]"
+VALID_RECIPIENT="${LP0008_LIVE_SEND_RECIPIENT:-yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3}"
+call wallet.send "[\"$VALID_RECIPIENT\",\"$SMALL\"]"
 assert wallet.send .approved true
 
-# Large transfer — above threshold
-# LE16 for 390625000
-HUGE='e87648170000000000000000000000'
-call wallet.send "[\"0x-recipient\",\"$HUGE\"]"
+# Lower the threshold, then request the same small transfer above threshold. It
+# must not execute immediately; instead it creates a persisted owner approval
+# request and owner-channel notification.
+call meta.configure '["per_tx_limit","5"]'
+call wallet.send "[\"$VALID_RECIPIENT\",\"$SMALL\"]"
 assert wallet.send .approved false
+assert wallet.send .action '"owner_approval_required"'
+assert wallet.send .notification.sent true
+APPROVAL_ID=$(getval wallet.send .approval_id)
+
+call approval.list '[]'
+assert approval.list .count 1
+assert approval.list .approvals.0.status '"pending"'
+
+call approval.retry "[\"$APPROVAL_ID\"]"
+assert approval.retry .status '"pending"'
+
+call approval.reject "[\"$APPROVAL_ID\",\"demo rejection\"]"
+assert approval.reject .rejected true
+
+# A second approval request exercises the approve-and-execute path.
+call wallet.send "[\"$VALID_RECIPIENT\",\"$SMALL\"]"
+assert wallet.send .approved false
+APPROVAL_ID=$(getval wallet.send .approval_id)
+call approval.approve "[\"$APPROVAL_ID\"]"
+assert approval.approve .approved true
+assert approval.approve .executed true
 
 call wallet.history '[]'
 $PY -c "
@@ -150,7 +176,8 @@ from assert_result import smart_parse
 v=smart_parse(open('$AGENT_MODULE_STATE_DIR/wallet_history.out').read().strip())
 txs=v.get('transactions',[])
 assert isinstance(txs, list), f'expected transactions list, got {type(txs)}'
-print(f'ok wallet.history returned {len(txs)} transaction(s)')
+assert any(tx.get('type') == 'approved_send' for tx in txs), 'expected approved_send history entry'
+print(f'ok wallet.history returned {len(txs)} transaction(s), including approved_send')
 "
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -235,5 +262,5 @@ echo "  ✓ Wallet:    balance, send approval path (gate blocks >500), history"
 echo "  ✓ Program:   query, call, deploy"
 echo "  ✓ Agent:     card (A2A), discover, task, receive, subscribe, complete, cancel"
 echo ""
-say "Demo passed: all spec skills work, spending gate enforces thresholds, A2A card is compliant."
+say "Demo passed: all spec skills work, owner approval flow gates above-threshold sends, A2A card is compliant."
 # ═══════════════════════════════════════════════════════════════════════

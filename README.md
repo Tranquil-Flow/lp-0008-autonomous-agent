@@ -7,7 +7,7 @@ An autonomous AI agent module for the Logos blockchain ecosystem. The agent hold
 
 This repository is under active strict LP-0008 completion work. CI and local validators prove repository hygiene, module buildability, raw C ABI behavior, Logos Core co-load, and wallet/storage/messaging primitives. They do **not** by themselves prove final Lambda Prize acceptance.
 
-Before final submission, the remaining strict gaps in `docs/submission-readiness-matrix.md` must be closed or explicitly accepted as residual risk: Basecamp owner-channel interaction, owner approval retry/timeout flow, Logos Messaging A2A transport with LEZ payment, three separate testnet agents/use cases, CU documentation, and proof-mode/video evidence.
+Before final submission, the remaining strict gaps in `docs/submission-readiness-matrix.md` must be closed or explicitly accepted as residual risk: Basecamp owner-channel interaction, Logos Messaging A2A transport with LEZ payment, three separate testnet agents/use cases, CU documentation, and proof-mode/video evidence.
 
 ## Architecture
 
@@ -177,3 +177,5 @@ if (skill_name == "custom.skill") return customSkill(s(0));
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+- Wallet approvals: above-threshold sends create persisted owner approvals with retry/reject/approve commands.
