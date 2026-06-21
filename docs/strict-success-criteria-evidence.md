@@ -60,3 +60,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 - Linux CI does not pretend wallet FFI is available. It builds a fail-closed bridge for unsupported platforms.
 - `program.call` and `program.deploy` fail closed inside the module until Logos exposes a module-safe LEZ program SDK/C ABI. The compatible external rc3 SPEL/lgs path is documented in `docs/upstream/program-live-api.md`.
 - Delivery receive/poll is constrained by the current delivery module API; `agent.receive` processes the persisted inbox and live send is proven through `delivery_module`.
+
+## CU/proof-mode documentation
+
+`docs/cu-costs.md` documents current CU/proof boundaries: public-testnet wallet tx evidence exists, current rc3 wallet output does not expose a stable CU field, and `program.call`/`program.deploy` submit no transaction because they fail closed.

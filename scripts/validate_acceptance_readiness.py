@@ -21,6 +21,7 @@ REQUIRED_FILES = [
     "docs/final-video-audio-narration.md",
     "docs/strict-success-criteria-evidence.md",
     "docs/submission-readiness-matrix.md",
+    "docs/cu-costs.md",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -62,8 +63,13 @@ REQUIRED_PHRASES = {
     "docs/submission-readiness-matrix.md": [
         "not ready for final Lambda Prize submission yet",
         "Basecamp owner-channel",
-        "Publish/discover cards and task envelopes over Logos Messaging transport",
+        "transport.result.mode == live",
         "CU cost documented",
+    ],
+    "docs/cu-costs.md": [
+        "CU cost and proof-mode notes",
+        "CU field not exposed",
+        "RISC0_DEV_MODE=0 boundary",
     ],
     "scaffold.toml": [
         "[modules.agent_module]",
@@ -118,7 +124,7 @@ def main() -> int:
     if not final_gate.exists():
         fail("missing final pre-video evidence gate")
     gate_text = final_gate.read_text(errors="ignore")
-    for needle in ["run_logoscore_integration.sh all", "run_multi_agent_a2a_demo.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
+    for needle in ["run_logoscore_integration.sh all", "run_lp0008_deep_verify.py", "run_multi_agent_a2a_demo.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
         if needle not in gate_text:
             fail(f"final evidence gate missing {needle}")
 
