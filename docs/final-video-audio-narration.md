@@ -1,69 +1,51 @@
 # LP-0008 Final Video Audio Narration Script
 
-Read this while recording the terminal demo. Pace target: calm, clear, 6-8 minutes total.
+Use this narration while recording `scripts/record_final_video.sh`. It follows that script's scene order exactly. Keep claims bounded: this is strong terminal/package evidence, not a Basecamp GUI-owner-channel claim and not a proof-mode LEZ program execution claim.
 
-## Opening
+## LP-0008 Autonomous AI Agent for Logos Core
 
-This is LP-0008, an autonomous AI agent module for Logos Core.
+"This is LP-0008, an autonomous AI agent module for Logos Core. The agent has a documented skill registry, file-backed state, spending controls, storage and messaging integration, A2A-compatible Agent Cards and tasks, and a LEZ wallet bridge where the public-testnet wallet FFI is available. This recording shows the reproducible evidence bundle from the public implementation repository."
 
-The implementation is public in the Tranquil-Flow LP-0008 repository. I am starting by showing the tracked tree, the exact commit, and the remote branch, so reviewers can match this recording to the submitted artifact.
+## Repository and public commit
 
-## Build
+"First I am showing the exact repository state and commit. This is the implementation repository that reviewers can clone. The working tree should be clean, and the commit shown here is the public commit that CI verifies."
 
-The module builds with a single Nix command through the Logos module-builder path. The build output contains the loadable agent module artifact that Logos Core uses at runtime.
+## Nix module build
 
-## Core skill verification
+"Now I build the install artifact with Nix. This produces the loadable Logos Core module package used by the demos and integration scripts."
 
-Now I am running the core demo. This demo uses a direct C ABI caller through dlopen and `logos_module_dispatch`. That matters because the logoscore CLI has a JSON display quirk; this harness verifies the real return values from the module.
+## Basecamp CLI artifact readiness
 
-The module implements 23 skills across six categories: meta, storage, messaging, wallet, program, and agent coordination.
+"This scene shows Basecamp CLI artifact readiness: the scaffold metadata and LGX package are present and buildable. I am not claiming this terminal scene proves a separate Basecamp GUI owner-channel conversation; it proves the packaged artifact path and module visibility used for Basecamp integration."
 
-In the meta section, `meta.skills` returns the full skill registry with input and output schemas. `meta.status` reports persisted agent state and configuration.
+## Core C ABI demo
 
-In the storage section, the agent uploads, downloads, lists, and shares files. The state is file-backed, so it survives process restarts.
+"The core demo uses the direct C ABI harness rather than relying on CLI display formatting. It exercises the dispatch surface and validates structured JSON results, including configuration, storage, messaging, wallet gates, program boundary behavior, A2A task lifecycle, and owner approval flow."
 
-In the wallet section, the spending gate is the key safety control. A below-threshold transfer is approved. An over-threshold transfer is blocked with `exceeds_per_tx_limit`, so the agent does not silently spend beyond the owner-configured limit.
+## Logos Core integration with storage and delivery
 
-In the program section, program call and deploy fail closed. They are not faked as successful. The repository documents that Logos Core currently does not expose a module-safe LEZ program SDK or C ABI for this path.
+"Next is the Logos Core integration script. It loads the agent alongside storage and delivery modules and verifies the module works through Logos Core, not just the standalone harness. Storage upload and download paths are exercised where the module API supports them, and delivery uses valid Logos Messaging topics for live send paths."
 
-In the agent section, `agent.card` returns an A2A-compatible Agent Card with protocol `a2a`, version `1.0`, authentication, payment metadata, and all advertised skills. The task lifecycle records queued, working, completed, failed, and terminal cancel-guard behavior.
+## Live Logos Messaging A2A deep verifier
 
-## Logos Core integration
+"The deep verifier proves A2A task transport over Logos Messaging. The important evidence is the task lifecycle containing transport_sent and a transport result whose mode is live when a valid LIP-23 task topic is configured. This is the privacy-preserving transport layer replacing vanilla A2A HTTP."
 
-Next I am running the Logos Core integration harness.
+## Three configured agents and use cases
 
-This starts fresh Logos Core daemon instances and loads the agent together with storage and delivery modules. Storage upload and list go through `storage_module`. Delivery send goes through `delivery_module` using a valid LIP-23 topic.
+"Here the evidence bundle demonstrates three configured agents: Alpha Storage, Beta Messaging, and Gamma Chain. The multi-agent script verifies discovery, inbound task processing, subscription readback, and terminal-state cancellation behavior. The three-use-case script demonstrates a personal file vault, an agent services marketplace payment hook, and a multi-agent workflow. Where funded wallet environment variables are absent, payment-hook recording is deterministic rather than pretending a live inter-agent LEZ payment happened."
 
-The invalid-topic guard is intentional. A known delivery-module abort path exists for invalid topics, so the agent validates locally and keeps the daemon alive instead of crashing.
+## Persistence and guarded resilience
 
-For receive, the agent uses persisted inbox polling. The delivery module exposes message events but does not currently expose a synchronous receive or poll query API callable by another module. That boundary is documented, not hidden.
+"The resilience gate verifies that pending owner approvals survive process restart, expired approvals cannot execute, and a failing skill does not crash the module or poison later skill execution. This covers the reliability properties that matter for a long-running autonomous agent."
 
-## Three-agent A2A proof
+## Acceptance validator
 
-Now I am running the multi-agent A2A proof.
+"The validator checks reviewer-facing evidence and honesty boundaries. It is designed to fail if the submission text drifts into overclaiming, uses stale skill counts, or omits required evidence documents."
 
-This configures three separate agents: Alpha Storage, Beta Messaging, and Gamma Chain. Each has its own Agent Card, task topic, owner topic, and role.
+## Evidence map
 
-The demo proves discovery of all three cards, inbound task-envelope processing through `agent.receive`, queued-to-working-to-completed lifecycle, subscribe readback, and terminal cancel protection.
+"The evidence map summarizes what is proven and what is intentionally not claimed. Live public-testnet wallet evidence is retained by transaction hash. Program call and deploy return bounded errors until Logos exposes a module-safe LEZ program SDK or C ABI, and CU/proof-mode limitations are documented rather than hidden."
 
-This covers the agent-services and multi-agent workflow use cases, while the storage and wallet proofs cover the file-vault and payment primitives.
+## Close
 
-## Deep verifier and readiness validator
-
-The deep verifier exercises the full skill surface and checks important invariants, including wallet/account consistency.
-
-The readiness validator checks the reviewer-facing documentation, dependency policy, upstream gap notes, strict evidence map, and the fact that the only remaining publication artifact is this video.
-
-## Live wallet evidence
-
-With the funded rc3 wallet mounted, the final pre-video evidence gate submits a real public-testnet wallet send through the module FFI.
-
-The latest retained run completed with `PRE_VIDEO_EVIDENCE_OK`. It submitted transaction `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`, found the transaction on public testnet, and observed the balance decrease from 149 to 144.
-
-This is not a mocked transaction. Linux CI fails closed for unavailable wallet FFI; the live wallet proof is run on the Darwin M4 environment with the rc3 wallet FFI and funded testnet state.
-
-## Closing
-
-The evidence map links each LP-0008 success criterion to a command or artifact. The repo is clean, CI is green, the Lambda Prize validator passes when `SUBMISSION.md` is copied into `solutions/LP-0008.md`, and the prize is still open.
-
-After this recording, the only remaining publication step is to upload the video, paste the URL into `SUBMISSION.md` and `solutions/LP-0008.md`, and open the Lambda Prize pull request after explicit approval.
+"The non-video evidence bundle is green. The remaining publication step is to upload this narrated video, insert its public URL into the submission text, rerun the validators, and then open the Lambda Prize PR only after explicit approval."

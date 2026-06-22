@@ -27,6 +27,8 @@ REQUIRED_FILES = [
     "scripts/run_three_use_cases_demo.sh",
     "scripts/run_resilience_evidence.sh",
     "scripts/record_final_video.sh",
+    "docs/final-submission-preflight.md",
+    "scripts/apply_final_video_url.py",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -86,6 +88,11 @@ REQUIRED_PHRASES = {
         "ASSERT three illustrative use cases",
         "payment_submitted",
         "summary.json",
+    ],
+    "docs/final-submission-preflight.md": [
+        "ready except narrated video URL",
+        "PENDING_VIDEO_URL",
+        "explicit approval",
     ],
     "docs/resilience-evidence.md": [
         "pending approval persistence",
