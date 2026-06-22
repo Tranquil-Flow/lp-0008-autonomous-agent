@@ -29,6 +29,7 @@ REQUIRED_FILES = [
     "scripts/record_final_video.sh",
     "docs/final-submission-preflight.md",
     "scripts/apply_final_video_url.py",
+    "scripts/finalize_after_video.sh",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -88,6 +89,11 @@ REQUIRED_PHRASES = {
         "ASSERT three illustrative use cases",
         "payment_submitted",
         "summary.json",
+    ],
+    "scripts/finalize_after_video.sh": [
+        "FINALIZE_OK",
+        "ask explicit approval",
+        "validate-submission.sh",
     ],
     "docs/final-submission-preflight.md": [
         "ready except narrated video URL",
