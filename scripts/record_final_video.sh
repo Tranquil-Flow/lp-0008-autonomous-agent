@@ -35,6 +35,10 @@ run git status -sb
 run git log -1 --oneline
 run_shell "git ls-remote origin refs/heads/main refs/heads/feat/real-lez-wallet"
 
+section "Final strict evidence umbrella"
+printf 'This gate reruns all non-video evidence and records known upstream blockers explicitly. Expected status before upstream wallet/program fixes is ok_with_blockers, not silent success.\n'
+run ./scripts/run_final_strict_evidence.sh
+
 section "Nix module build"
 run nix build .#install --out-link result
 run_shell "find result/modules -maxdepth 2 -type f | sort"

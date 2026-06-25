@@ -10,6 +10,11 @@ Use this narration while recording `scripts/record_final_video.sh`. It follows t
 
 "First I am showing the exact repository state and commit. This is the implementation repository that reviewers can clone. The working tree should be clean, and the commit shown here is the public commit that CI verifies."
 
+
+## Final strict evidence umbrella
+
+This section runs `scripts/run_final_strict_evidence.sh`. The important detail is honesty: every non-video evidence step must either pass or be recorded as an explicit upstream/tooling blocker. Today the expected status is `ok_with_blockers`, with `paid-a2a-live` blocked by the rc3 wallet transfer proof panic after live Logos Messaging A2A completion.
+
 ## Nix module build
 
 "Now I build the install artifact with Nix. This produces the loadable Logos Core module package used by the demos and integration scripts."
