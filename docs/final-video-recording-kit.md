@@ -14,7 +14,7 @@ Show these claims only:
 - Approval persistence, timeout guard behavior, and post-failure skill isolation are shown by `scripts/run_resilience_evidence.sh`.
 - Wallet balance/history and funded wallet-send use live LEZ wallet FFI against public testnet when a funded rc3 wallet is mounted.
 - Program query is simulated; `program.call` and `program.deploy` return bounded errors because Logos Core exposes no module-safe LEZ program SDK/C ABI yet.
-- Basecamp CLI artifact readiness may be shown by displaying `scaffold.toml`, `lgs basecamp modules --show`, and `nix build .#lgx`; this is artifact readiness, not GUI interaction proof.
+- Basecamp CLI artifact readiness may be shown by displaying `scaffold.toml`, `lgs basecamp modules --show`, and `nix build .#lgx-portable`; this is evaluator-loadable artifact readiness, not GUI interaction proof.
 
 Do not claim GUI/Basecamp owner-channel interaction or live program execution unless those are recorded separately with real evidence.
 

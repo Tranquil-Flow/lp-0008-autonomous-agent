@@ -121,7 +121,7 @@ That harness configures Alpha/Beta/Gamma identities, publishes their Agent Cards
 The repository includes `scaffold.toml` with `[modules.agent_module] = path:.#lgx`, so reviewers can inspect or prepare a Basecamp install path with `lgs basecamp modules --show`. The `.lgx` artifact is verified with:
 
 ```bash
-nix build .#lgx --out-link result-lgx
+nix build .#lgx-portable --out-link result-lgx-portable
 ```
 
 This is a compatibility/evidence path, not a GUI claim: the final submission video should not claim Basecamp GUI interaction unless a real `lgs basecamp install/launch` session is recorded separately.

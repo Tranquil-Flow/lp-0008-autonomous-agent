@@ -46,7 +46,7 @@ run_shell "find result/modules -maxdepth 2 -type f | sort"
 section "Basecamp CLI artifact readiness"
 run_shell "sed -n '1,80p' scaffold.toml"
 run lgs basecamp modules --show
-run nix build .#lgx --out-link result-lgx
+run nix build .#lgx-portable --out-link result-lgx-portable
 
 section "Core C ABI demo"
 run bash demo.sh

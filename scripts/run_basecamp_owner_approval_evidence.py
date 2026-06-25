@@ -40,7 +40,7 @@ def cli_call(cli: pathlib.Path, config: pathlib.Path, name: str, skill: str, arg
     return run(name, [cli,'--config-dir',config,'call','agent_module','dispatchSkill',skill,json.dumps(args)], check=check)
 
 # Basecamp artifact readiness: this proves the project is scaffold-visible, not GUI clicked.
-run('nix-build-lgx', ['nix','build','.#lgx','--print-out-paths'], timeout=600)
+run('nix-build-lgx-portable', ['nix','build','.#lgx-portable','--print-out-paths'], timeout=600)
 run('lgs-basecamp-modules-show', ['lgs','basecamp','modules','--show'], timeout=180, check=False)
 
 # Build/load modules through logoscore, same seam Basecamp consumes for module entrypoints.
@@ -114,7 +114,7 @@ try:
       'approval_approve_id': approval2,
       'approval_approve_message_id': notification2.get('message_id'),
       'approval_approved': approved,
-      'basecamp_artifact': (BASE/'nix-build-lgx.stdout').read_text().strip().splitlines()[-1],
+      'basecamp_artifact': (BASE/'nix-build-lgx-portable.stdout').read_text().strip().splitlines()[-1],
       'lgs_modules_show_rc': json.loads(json.dumps({'returncode': int(0)})),
       'raw_logs': sorted(str(p) for p in BASE.glob('*.stdout')),
       'strict_limitations': ['No GUI click was performed in this script; it proves Basecamp artifact readiness and the separate owner-topic approval channel through logoscore.'],
@@ -131,7 +131,7 @@ try:
       f'- Request owner notification message id: `{notification.get("message_id")}`',
       f'- Approved approval id: `{approval2}`',
       f'- Approve owner notification message id: `{notification2.get("message_id")}`',
-      '- `nix build .#lgx` passed.',
+      '- `nix build .#lgx-portable` passed for the evaluator-loadable package. `.#lgx` remains the local scaffold/dev variant.',
       '- Limitation: this is not yet a recorded Basecamp GUI click; it is the artifact/logoscore seam proof used before final video.', '',
     ]))
     print('BASECAMP_OWNER_APPROVAL_OK ' + str(BASE/'basecamp_owner_approval_summary.json'))

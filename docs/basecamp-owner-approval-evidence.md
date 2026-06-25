@@ -8,5 +8,5 @@ This evidence proves Basecamp artifact readiness plus the separate owner-channel
 - Request owner notification message id: `6b3a7a8e5a1d1da655a0`
 - Approved approval id: `appr-1782384387552-1`
 - Approve owner notification message id: `a7045d9cca22f341f2a2`
-- `nix build .#lgx` passed.
+- `nix build .#lgx-portable` passed for the evaluator-loadable package. `.#lgx` remains the local scaffold/dev variant.
 - Limitation: this is not yet a recorded Basecamp GUI click; it is the artifact/logoscore seam proof used before final video.
