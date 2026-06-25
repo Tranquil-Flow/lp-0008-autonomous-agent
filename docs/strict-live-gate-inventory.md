@@ -1,9 +1,9 @@
 # LP-0008 strict live gate inventory
 
-Generated: 20260625_104425 UTC
-Repo SHA: `78342acfa82ffcaf74fb4b686500b18e6dd9f411`
-Raw log: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_104425.log`
-JSON: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_104425.json`
+Generated: 20260625_120959 UTC
+Repo SHA: `c0833af651151539da139f090cb98b1777fcc667`
+Raw log: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_120959.log`
+JSON: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_120959.json`
 
 Counts: PASS=14 WARN=3 FAIL=0
 
@@ -23,7 +23,7 @@ Counts: PASS=14 WARN=3 FAIL=0
 | PASS | required | scaffold.toml | /Users/evinova-self/Projects/logos-basecamp/lp-0008-autonomous-agent/scaffold.toml |
 | PASS | required | wallet-private-account-count | private_accounts=4 public_accounts=4 |
 | WARN | required | wallet-check-health | rc=101; 
-thread 'main' (3727312) panicked at /Users/evinova-self/.cargo/git/checkouts/logos-execution-zone-6bae42d7c9cadfe7/cf3639d/wallet/src/cli/mod.rs:134:13:
+thread 'main' (3822469) panicked at /Users/evinova-self/.cargo/git/checkouts/logos-execution-zone-6bae42d7c9cadfe7/cf3639d/wallet/src/cli/mod.rs:134:13:
 Local ID for authenticated transfer program is different from remote
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace |
 | PASS | required | lez-sequencer-reachability | https://testnet.lez.logos.co reachable |
