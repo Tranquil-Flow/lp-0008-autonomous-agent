@@ -67,12 +67,12 @@ On screen:
 ```bash
 sed -n '1,80p' scaffold.toml
 lgs basecamp modules --show
-nix build .#lgx --out-link result-lgx
+nix build .#lgx-portable --out-link result-lgx-portable
 ```
 
 Narration cue:
 
-"The project is also Basecamp-ready at the CLI artifact level: `scaffold.toml` captures `agent_module` as `path:.#lgx`, and the `.lgx` artifact builds. I am not claiming a GUI/Basecamp interaction here; the tested runtime evidence remains the Logos Core and C ABI paths shown next."
+"The project is also Basecamp-ready at the CLI artifact level: `scaffold.toml` captures `agent_module` as `path:.#lgx`, and the evaluator-loadable `.#lgx-portable` artifact builds. I am not claiming a GUI/Basecamp interaction here; the tested runtime evidence remains the Logos Core and C ABI paths shown next."
 
 ## Scene 4 — core all-skill demo, 90 sec
 
