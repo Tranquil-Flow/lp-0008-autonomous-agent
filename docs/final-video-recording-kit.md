@@ -9,7 +9,7 @@ Show these claims only:
 - The agent module builds and loads through Logos Core/C ABI paths.
 - The raw harness verifies the skill surface.
 - Storage and delivery live paths are exercised where module APIs exist.
-- A2A task transport is shown over live Logos Messaging in `scripts/run_lp0008_deep_verify.py`.
+- A2A task transport is shown over live Logos Messaging in `scripts/run_lp0008_deep_verify.py` and `scripts/run_final_strict_evidence.sh`; paid-A2A LEZ transfer remains explicitly blocked by the rc3 wallet transfer proof panic.
 - Three configured agent profiles/cards/topics and three illustrative use cases are shown by executable scripts.
 - Approval persistence, timeout guard behavior, and post-failure skill isolation are shown by `scripts/run_resilience_evidence.sh`.
 - Wallet balance/history and funded wallet-send use live LEZ wallet FFI against public testnet when a funded rc3 wallet is mounted.
@@ -20,7 +20,7 @@ Do not claim GUI/Basecamp owner-channel interaction or live program execution un
 
 ## Dry-run transcript hygiene
 
-Before recording, run:
+Before recording, run this dry-run hygiene check:
 
 ```bash
 ssh m4pro 'cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent && RUN_COMMANDS=0 SECTION_PAUSE=0 COMMAND_PAUSE=0 bash scripts/record_final_video.sh > /tmp/lp0008-recording-dry-run.txt && grep -Ei "do not cite|supersedes|pre-fix|remaining work|URL is inserted|Evi-gated|reviewer|closed|denied|denial|overclaim|resubmission once|fresh video|old PR|stale|this video URL|missing narrated video" /tmp/lp0008-recording-dry-run.txt || true && sed -n "1,220p" /tmp/lp0008-recording-dry-run.txt'
@@ -29,6 +29,8 @@ ssh m4pro 'cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent && RUN_COMMANDS
 The grep should print no matches. If it prints a match, edit the recording script before recording.
 
 ## Recording command
+
+This command now runs `scripts/record_final_video.sh`, whose first substantive proof scene runs `scripts/run_final_strict_evidence.sh`. Expected strict-gate status before upstream wallet/program fixes is `ok_with_blockers`: no failed shell steps, one retained paid-A2A wallet blocker.
 
 Run this from the laptop terminal while recording the terminal window:
 
@@ -77,8 +79,18 @@ If the optional wallet proof is too slow, cite the retained public-testnet trans
 
 ```bash
 ./scripts/validate_acceptance_readiness.py
-./scripts/run_lp0008_deep_verify.py
+./scripts/run_final_strict_evidence.sh
 ```
 
 4. Commit and push the video URL update to `Tranquil-Flow/lp-0008-autonomous-agent`.
 5. Only after explicit approval, prepare a minimal `solutions/LP-0008.md` branch for `logos-co/lambda-prize`.
+
+## Direct-on-M4 alternative
+
+If you are already in a shell on the M4 Pro, run:
+
+```bash
+PATH=/opt/homebrew/bin:$HOME/.cargo/bin:$HOME/bin:$PATH
+cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent
+bash scripts/record_final_video.sh
+```

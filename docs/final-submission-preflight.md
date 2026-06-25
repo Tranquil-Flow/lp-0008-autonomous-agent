@@ -5,7 +5,7 @@ State: ready except narrated video URL.
 ## What is complete
 
 - Implementation repo default branch is the reviewer clone target.
-- `scripts/run_final_pre_video_evidence.sh` is the umbrella non-video gate and emits `PRE_VIDEO_EVIDENCE_OK`.
+- `scripts/run_final_strict_evidence.sh` is the primary umbrella non-video gate and emits `FINAL_STRICT_EVIDENCE_COMPLETE` with `ok` or honest `ok_with_blockers` status. The older `scripts/run_final_pre_video_evidence.sh` remains part of that strict gate and emits `PRE_VIDEO_EVIDENCE_OK`.
 - `scripts/record_final_video.sh` is the recording script.
 - `docs/final-video-audio-narration.md` follows the recording script section order.
 - `SUBMISSION.md` has exactly one publication placeholder: `PENDING_VIDEO_URL`.
@@ -61,4 +61,4 @@ Do not claim:
 
 ## Final strict gate
 
-Run `scripts/run_final_strict_evidence.sh` before recording the final video. Current expected status before the upstream wallet/program APIs are fixed is `ok_with_blockers`, with no failed shell steps and explicit blocked evidence for rc3 wallet transfer proving.
+Run `scripts/run_final_strict_evidence.sh` before recording the final video, and note that `scripts/record_final_video.sh` now runs it as the first substantive evidence scene. Current expected status before the upstream wallet/program APIs are fixed is `ok_with_blockers`, with no failed shell steps and explicit blocked evidence for rc3 wallet transfer proving.
