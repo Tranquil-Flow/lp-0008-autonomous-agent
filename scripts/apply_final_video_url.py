@@ -6,7 +6,7 @@ Usage:
   LAMBDA_PRIZE_WORKTREE=$HOME/lp0008-phase0/lambda-prize-local scripts/apply_final_video_url.py https://example.com/video
 """
 from pathlib import Path
-import os, re, sys
+import os, re, subprocess, sys
 
 if len(sys.argv) != 2:
     raise SystemExit("usage: apply_final_video_url.py <https-video-url>")
@@ -22,11 +22,19 @@ lambda_root = os.environ.get("LAMBDA_PRIZE_WORKTREE")
 if lambda_root:
     paths.append(Path(lambda_root)/"solutions/LP-0008.md")
 
+current_sha = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip()
+
 for path in paths:
     if not path.exists():
         raise SystemExit(f"missing file: {path}")
     text = path.read_text()
     if "PENDING_VIDEO_URL" not in text:
         raise SystemExit(f"PENDING_VIDEO_URL not found in {path}")
-    path.write_text(text.replace("PENDING_VIDEO_URL", url))
+    text = text.replace("PENDING_VIDEO_URL", url)
+    text = re.sub(
+        r"Current implementation commit: `[^`]+`\.",
+        f"Current implementation commit: `{current_sha}`.",
+        text,
+    )
+    path.write_text(text)
     print(f"updated {path}")
