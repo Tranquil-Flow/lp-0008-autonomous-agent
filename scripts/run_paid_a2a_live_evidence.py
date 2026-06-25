@@ -19,7 +19,7 @@ WALLET_CLI=pathlib.Path(ENV.get('LP0008_RC3_WALLET_CLI', str(HOME/'Projects/logo
 WALLET_HOME=pathlib.Path(ENV.get('LP0008_LIVE_WALLET_HOME', str(HOME/'lp0008-phase0/rc3_faucet_wallet')))
 ALPHA_PRIVATE=ENV.get('LP0008_PAID_A2A_ALPHA_PRIVATE','Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq')
 BETA_PRIVATE=ENV.get('LP0008_PAID_A2A_BETA_PRIVATE','Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN')
-BETA_PUBLIC=ENV.get('LP0008_PAID_A2A_BETA_PUBLIC','Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV')
+BETA_PUBLIC=ENV.get('LP0008_PAID_A2A_BETA_PUBLIC','Public/yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3')
 AMOUNT=ENV.get('LP0008_PAID_A2A_AMOUNT_LE16','01000000000000000000000000000000')
 
 def raw(account: str)->str:
@@ -61,10 +61,45 @@ if not cli.exists(): run('build-logoscore-cli', ['nix','build','github:logos-co/
 
 ok, alpha_bal, _ = wallet_get(ALPHA_PRIVATE, WALLET_HOME)
 if not ok or alpha_bal is None or alpha_bal <= 1: raise SystemExit(f'alpha sender not funded: {alpha_bal}')
-ok, beta_public_before, _ = wallet_get(BETA_PUBLIC, WALLET_HOME)
-if not ok or beta_public_before is None: raise SystemExit('beta public recipient not initialized')
-ok, beta_private_bal, _ = wallet_get(BETA_PRIVATE, WALLET_HOME)
-if not ok or beta_private_bal is None or beta_private_bal <= 0: raise SystemExit('beta private identity not funded')
+ok, beta_public_before, beta_public_get_output = wallet_get(BETA_PUBLIC, WALLET_HOME)
+if not ok or beta_public_before is None:
+    blocker={
+      'ok': False,
+      'blocked': True,
+      'blocker': 'paid A2A recipient public account is not readable on current public LEZ testnet; likely stale/reset account evidence or uninitialized recipient',
+      'failed_command': 'wallet account get --account-id ' + BETA_PUBLIC,
+      'failure_excerpt': beta_public_get_output[-4000:],
+      'a2a_task_completed': False,
+      'required_to_close': 'Initialize a fresh public recipient on current testnet, then rerun paid A2A; after that the remaining known blocker is rc3 private-send proof panic.',
+    }
+    (BASE/'paid_a2a_live_blocker.json').write_text(json.dumps(blocker, indent=2))
+    doc=DOCS/'paid-a2a-live-evidence.md'
+    doc.write_text('''# Paid A2A Live Evidence - Blocked Before LEZ Payment
+
+The strict paid-A2A payment gate cannot be honestly closed yet.
+
+- A2A task status: not run in this attempt; payment preflight failed before task dispatch.
+- Blocker: public payment recipient is not readable on the current public LEZ testnet.
+- Raw blocker JSON: `{blocker_path}`
+
+This is not accepted as strict paid-A2A completion; it is retained as fail-closed evidence for the upstream/tooling/testnet-state blocker.
+'''.format(blocker_path=BASE/'paid_a2a_live_blocker.json'))
+    print('PAID_A2A_BLOCKED recipient_not_initialized raw=' + str(BASE/'paid_a2a_live_blocker.json'))
+    raise SystemExit(2)
+ok, beta_private_bal, beta_private_get_output = wallet_get(BETA_PRIVATE, WALLET_HOME)
+if not ok or beta_private_bal is None or beta_private_bal <= 0:
+    blocker={
+      'ok': False,
+      'blocked': True,
+      'blocker': 'paid A2A seller private identity is not funded/readable on current public LEZ testnet',
+      'failed_command': 'wallet account get --account-id ' + BETA_PRIVATE,
+      'failure_excerpt': beta_private_get_output[-4000:],
+      'a2a_task_completed': False,
+      'required_to_close': 'Initialize/fund seller identity on current testnet, then rerun paid A2A.',
+    }
+    (BASE/'paid_a2a_live_blocker.json').write_text(json.dumps(blocker, indent=2))
+    print('PAID_A2A_BLOCKED seller_identity_not_funded raw=' + str(BASE/'paid_a2a_live_blocker.json'))
+    raise SystemExit(2)
 
 session=BASE/'logoscore-session'; config=session/'config'; persist=session/'persist'; agent_state=BASE/'agent-state'
 config.mkdir(parents=True); persist.mkdir(parents=True); agent_state.mkdir(parents=True)
