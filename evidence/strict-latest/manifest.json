@@ -1,0 +1,30 @@
+{
+  "artifacts": [
+    "docs/prize-criteria-source.md",
+    "docs/strict-traceability-matrix.md"
+  ],
+  "created_at": "2026-06-25T09:07:47.099269+00:00",
+  "criteria": {
+    "PHASE0": {
+      "artifacts": [
+        "docs/prize-criteria-source.md",
+        "docs/strict-traceability-matrix.md"
+      ],
+      "command": "scripts/write_strict_evidence_manifest.py add --criterion PHASE0 --status pass --script scripts/audit_lp0008_prize_criteria.py --artifact docs/prize-criteria-source.md --artifact docs/strict-traceability-matrix.md --note upstream prize criteria snapshotted and traceability audit passed",
+      "criterion": "PHASE0",
+      "message_ids": [],
+      "note": "upstream prize criteria snapshotted and traceability audit passed",
+      "recorded_at": "2026-06-25T09:07:47.142904+00:00",
+      "repo_sha": "1f3f4c899832e953444b6ca58e0a6bec7d202cfb",
+      "script": "scripts/audit_lp0008_prize_criteria.py",
+      "status": "pass",
+      "task_ids": [],
+      "tx_hashes": [],
+      "wallet_accounts": []
+    }
+  },
+  "repo": "Tranquil-Flow/lp-0008-autonomous-agent",
+  "repo_sha": "1f3f4c899832e953444b6ca58e0a6bec7d202cfb",
+  "schema": "lp0008-strict-evidence-manifest-v1",
+  "updated_at": "2026-06-25T09:07:47.151230+00:00"
+}
