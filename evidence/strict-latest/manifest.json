@@ -1,7 +1,10 @@
 {
   "artifacts": [
     "docs/prize-criteria-source.md",
-    "docs/strict-traceability-matrix.md"
+    "docs/strict-traceability-matrix.md",
+    "/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.log",
+    "/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.json",
+    "docs/strict-live-gate-inventory.md"
   ],
   "created_at": "2026-06-25T09:07:47.099269+00:00",
   "criteria": {
@@ -21,10 +24,28 @@
       "task_ids": [],
       "tx_hashes": [],
       "wallet_accounts": []
+    },
+    "PHASE1_PREFLIGHT": {
+      "artifacts": [
+        "/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.log",
+        "/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.json",
+        "docs/strict-live-gate-inventory.md"
+      ],
+      "command": "/Users/evinova-self/Projects/logos-basecamp/lp-0008-autonomous-agent/scripts/write_strict_evidence_manifest.py add --criterion PHASE1_PREFLIGHT --status pass --script scripts/preflight_strict_live_gates.sh --artifact /Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.log --artifact /Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.json --artifact docs/strict-live-gate-inventory.md --note strict live gate preflight PASS=14 WARN=3 FAIL=0",
+      "criterion": "PHASE1_PREFLIGHT",
+      "message_ids": [],
+      "note": "strict live gate preflight PASS=14 WARN=3 FAIL=0",
+      "recorded_at": "2026-06-25T09:10:44.075469+00:00",
+      "repo_sha": "0bf9122c28a5e817bb5f513a571a9ec87103442e",
+      "script": "scripts/preflight_strict_live_gates.sh",
+      "status": "pass",
+      "task_ids": [],
+      "tx_hashes": [],
+      "wallet_accounts": []
     }
   },
   "repo": "Tranquil-Flow/lp-0008-autonomous-agent",
-  "repo_sha": "1f3f4c899832e953444b6ca58e0a6bec7d202cfb",
+  "repo_sha": "0bf9122c28a5e817bb5f513a571a9ec87103442e",
   "schema": "lp0008-strict-evidence-manifest-v1",
-  "updated_at": "2026-06-25T09:07:47.151230+00:00"
+  "updated_at": "2026-06-25T09:10:44.086485+00:00"
 }
