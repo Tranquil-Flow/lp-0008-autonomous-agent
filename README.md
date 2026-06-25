@@ -139,6 +139,10 @@ scripts/run_logoscore_integration.sh stage-c
 
 `scripts/run_strict_skill_matrix.py` is the strict matrix gate for the registered default skill surface. It builds the agent, storage, and delivery modules with Nix, co-loads them in `logoscore`, then verifies 27 registered skills: the original 23 spec skills plus approval and A2A lifecycle helpers. The matrix includes success/bounded behavior, fail-closed behavior where applicable, explicit storage share and messaging group semantics, malformed A2A envelope handling, six concurrent live Logos Messaging sends, and a final module-loaded resilience check. The generated evidence is documented in `docs/strict-default-skill-matrix.md`.
 
+## Final strict evidence gate
+
+`scripts/run_final_strict_evidence.sh` is the umbrella non-video evidence gate. It writes a SHA-pinned JSON summary plus per-step logs under `~/lp0008-phase0/final_strict_evidence_<timestamp>/`, runs all strict phase scripts, and records known upstream/tooling blockers as `blocked` rather than silently passing them. A manual-only opt-in GitHub workflow is available at `docs/live-strict-evidence.workflow.yml (copy to .github/workflows/live-strict-evidence.yml with workflow-scope token)`.
+
 ## Final pre-video evidence gate
 
 Before recording the narrated Lambda Prize video, run:

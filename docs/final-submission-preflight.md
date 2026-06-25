@@ -57,3 +57,8 @@ Do not claim:
 - live `program.call`/`program.deploy` execution;
 - RISC0 proof-mode program execution;
 - acceptance guaranteed by validators.
+
+
+## Final strict gate
+
+Run `scripts/run_final_strict_evidence.sh` before recording the final video. Current expected status before the upstream wallet/program APIs are fixed is `ok_with_blockers`, with no failed shell steps and explicit blocked evidence for rc3 wallet transfer proving.

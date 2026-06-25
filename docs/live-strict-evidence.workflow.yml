@@ -1,0 +1,33 @@
+# Optional LP-0008 live strict evidence workflow template.
+#
+# This file is kept under docs/ because the available GitHub token for this
+# repository lacks workflow scope. To enable it, copy this file to:
+#   .github/workflows/live-strict-evidence.yml
+# using a token/account with workflow permission.
+
+name: LP-0008 Live Strict Evidence
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_prevideo_bundle:
+        description: "Skip legacy pre-video bundle (faster manual smoke)"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
+
+jobs:
+  live-strict-evidence:
+    runs-on: macos-14
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+      - name: Run strict evidence umbrella
+        env:
+          LP0008_SKIP_PREVIDEO_BUNDLE: ${{ inputs.skip_prevideo_bundle == true && 1 || 0 }}
+        run: |
+          chmod +x scripts/run_final_strict_evidence.sh
+          scripts/run_final_strict_evidence.sh

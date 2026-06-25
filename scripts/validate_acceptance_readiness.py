@@ -26,6 +26,8 @@ REQUIRED_FILES = [
     "docs/resilience-evidence.md",
     "scripts/run_three_use_cases_demo.sh",
     "scripts/run_resilience_evidence.sh",
+    "scripts/run_final_strict_evidence.sh",
+    "docs/final-strict-evidence-gate.md",
     "scripts/record_final_video.sh",
     "docs/final-submission-preflight.md",
     "scripts/apply_final_video_url.py",
@@ -112,6 +114,18 @@ REQUIRED_PHRASES = {
         "unknown_skill",
         "summary.json",
     ],
+    "docs/final-strict-evidence-gate.md": [
+        "Final strict evidence gate",
+        "run_final_strict_evidence.sh",
+        "ok_with_blockers",
+        "live-strict-evidence.yml",
+    ],
+    "scripts/run_final_strict_evidence.sh": [
+        "FINAL_STRICT_EVIDENCE_COMPLETE",
+        "run_step_allow_blocker",
+        "paid-a2a-live",
+        "strict-skill-matrix",
+    ],
     "scripts/record_final_video.sh": [
         "LP-0008 Autonomous AI Agent",
         "run_lp0008_deep_verify.py",
@@ -168,12 +182,19 @@ def main() -> int:
             fail(f"integration harness missing {needle}")
 
     final_gate = ROOT/"scripts/run_final_pre_video_evidence.sh"
+    strict_gate = ROOT/"scripts/run_final_strict_evidence.sh"
     if not final_gate.exists():
         fail("missing final pre-video evidence gate")
+    if not strict_gate.exists():
+        fail("missing final strict evidence gate")
     gate_text = final_gate.read_text(errors="ignore")
     for needle in ["run_logoscore_integration.sh all", "run_lp0008_deep_verify.py", "run_multi_agent_a2a_demo.sh", "run_three_use_cases_demo.sh", "run_resilience_evidence.sh", "run_live_wallet_send_verify.py", "PRE_VIDEO_EVIDENCE_OK"]:
         if needle not in gate_text:
             fail(f"final evidence gate missing {needle}")
+    strict_text = strict_gate.read_text(errors="ignore")
+    for needle in ["pre-video-bundle", "paid-a2a-live", "basecamp-owner-approval", "program-cu-boundary", "strict-skill-matrix", "FINAL_STRICT_EVIDENCE_COMPLETE"]:
+        if needle not in strict_text:
+            fail(f"strict evidence gate missing {needle}")
 
     submission = (ROOT/"SUBMISSION.md").read_text(errors="ignore")
     for phrase in ["not final-submission-ready yet", "Basecamp artifact readiness only", "Autonomous inter-agent LEZ payment tied to task acceptance is not yet proven"]:

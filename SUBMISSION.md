@@ -119,3 +119,8 @@ All 23 original spec skills are implemented and verified through the C ABI harne
 ## Terms & Conditions
 
 By submitting this solution, I confirm that I have read and agree to the [Terms & Conditions](../TERMS.md). This submission is original work licensed under MIT.
+
+
+## Strict evidence gate
+
+The final non-video gate is `scripts/run_final_strict_evidence.sh`. It records the repository SHA, runs the Nix build, raw C ABI demo, strict live preflight, three-agent identity proof, paid-A2A evidence, Basecamp owner approval evidence, program/CU boundary evidence, strict default-skill matrix, and reviewer-facing readiness validator. The gate intentionally reports `ok_with_blockers` while upstream rc3 wallet transfer proving and in-process program deploy/call APIs remain blocked.
