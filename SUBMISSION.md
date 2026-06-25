@@ -4,7 +4,7 @@
 
 ## Summary
 
-A Logos Core module prototype implementing an autonomous AI agent dispatch surface with 23 skills across six categories: meta (self-management), storage (Logos Storage), messaging (Logos Messaging), wallet (LEZ), program (LEZ programs), and agent (A2A-compatible inter-agent coordination). The module features a configurable spending threshold mechanism that currently blocks over-limit transactions, file-backed persistence for cross-process state, and a pluggable skill registry foundation. The executable evidence bundle is green through `scripts/run_final_pre_video_evidence.sh`; strict residual risks are tracked honestly in `docs/submission-readiness-matrix.md`.
+A Logos Core module prototype implementing an autonomous AI agent dispatch surface with the 23 original default skills plus approval/A2A lifecycle helpers across six categories: meta (self-management), storage (Logos Storage), messaging (Logos Messaging), wallet (LEZ), program (LEZ programs), and agent (A2A-compatible inter-agent coordination). The module features a configurable spending threshold mechanism that currently blocks over-limit transactions, file-backed persistence for cross-process state, and a pluggable skill registry foundation. The executable evidence bundle is green through `scripts/run_final_pre_video_evidence.sh`; strict residual risks are tracked honestly in `docs/submission-readiness-matrix.md`.
 
 The module is built with the Logos module-builder toolchain, packaged as a dynamically loadable `.lgx` module, and verified through standalone C ABI and Logos Core integration harnesses. The evidence bundle covers raw dispatch, live storage/delivery co-load, live Logos Messaging A2A transport, three configured agents/use cases, owner approval persistence, timeout guards, and post-failure isolation.
 
@@ -65,7 +65,7 @@ The current evidence bundle is green, but this repository is not final-submissio
 
 ### Functionality
 
-All 23 spec skills are implemented and verified through the C ABI harness:
+All 23 original spec skills are implemented and verified through the C ABI harness, with the stricter 27-skill registered surface covered by `scripts/run_strict_skill_matrix.py`:
 
 - **Meta (3):** skills listing (returns 23 skills with schemas), status (balance, storage count, config), configure (runtime key-value updates with persistence)
 - **Storage (4):** upload (file → content address), download (address → file), list (file index), share (access delegation)
@@ -111,6 +111,7 @@ All 23 spec skills are implemented and verified through the C ABI harness:
 - **Deep verifier:** `scripts/run_lp0008_deep_verify.py` — includes live Logos Messaging A2A transport proof
 - **Three-agent/use-case evidence:** `scripts/run_multi_agent_a2a_demo.sh` and `scripts/run_three_use_cases_demo.sh`
 - **Resilience evidence:** `scripts/run_resilience_evidence.sh`
+- **Strict skill matrix evidence:** `scripts/run_strict_skill_matrix.py` and `docs/strict-default-skill-matrix.md`
 - **Final pre-video evidence gate:** `scripts/run_final_pre_video_evidence.sh` — latest M4 Pro run completed with `PRE_VIDEO_EVIDENCE_OK`; prior public-testnet wallet tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` and balance `149 -> 144` retained.
 - **Architecture diagram:** README.md
 - **Video demo:** PENDING_VIDEO_URL

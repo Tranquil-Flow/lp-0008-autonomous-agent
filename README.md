@@ -22,7 +22,7 @@ Before final submission, the remaining strict gaps in `docs/submission-readiness
 │  │              Agent Module (this)                │ │
 │  │  ┌──────────────┐  ┌──────────────┐            │ │
 │  │  │ SkillRegistry│  │ SpendingGate │            │ │
-│  │  │  (23 skills) │  │ (thresholds) │            │ │
+│  │  │ (27 registered)│ │ (thresholds) │            │ │
 │  │  └──────────────┘  └──────────────┘            │ │
 │  │  ┌──────────────┐  ┌──────────────┐            │ │
 │  │  │ AgentConfig  │  │ Persistence  │            │ │
@@ -81,7 +81,7 @@ Module artifact: `result/modules/agent_module/agent_module_plugin.dylib` on Darw
 The demo:
 1. Builds the module via Nix
 2. Compiles a standalone C ABI caller (`tests/cabi_call.cpp`)
-3. Exercises all 23 skills via `dispatchSkill()` through the raw C ABI
+3. Exercises the core default skill surface via `dispatchSkill()` through the raw C ABI
 4. Asserts correct return values for each skill
 5. Proves the spending gate blocks over-threshold transactions
 
@@ -134,6 +134,10 @@ LOGOS_BASECAMP_ROOT=$HOME/Projects/logos-basecamp \
 LP0008_TEST_ROOT=$HOME/lp0008-phase0 \
 scripts/run_logoscore_integration.sh stage-c
 ```
+
+## Strict default-skill matrix
+
+`scripts/run_strict_skill_matrix.py` is the strict matrix gate for the registered default skill surface. It builds the agent, storage, and delivery modules with Nix, co-loads them in `logoscore`, then verifies 27 registered skills: the original 23 spec skills plus approval and A2A lifecycle helpers. The matrix includes success/bounded behavior, fail-closed behavior where applicable, explicit storage share and messaging group semantics, malformed A2A envelope handling, six concurrent live Logos Messaging sends, and a final module-loaded resilience check. The generated evidence is documented in `docs/strict-default-skill-matrix.md`.
 
 ## Final pre-video evidence gate
 
