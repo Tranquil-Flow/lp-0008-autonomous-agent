@@ -4,10 +4,60 @@
     "docs/strict-traceability-matrix.md",
     "/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.log",
     "/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260625_091042.json",
-    "docs/strict-live-gate-inventory.md"
+    "docs/strict-live-gate-inventory.md",
+    "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+    "docs/three-live-agents.md",
+    "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+    "docs/three-live-agents.md",
+    "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+    "docs/three-live-agents.md",
+    "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+    "docs/three-live-agents.md"
   ],
   "created_at": "2026-06-25T09:07:47.099269+00:00",
   "criteria": {
+    "F10": {
+      "artifacts": [
+        "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+        "docs/three-live-agents.md"
+      ],
+      "command": "/Users/evinova-self/Projects/logos-basecamp/lp-0008-autonomous-agent/scripts/write_strict_evidence_manifest.py add --status pass --script scripts/setup_three_live_agents.sh --script scripts/verify_three_live_agents.py --artifact /Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json --artifact docs/three-live-agents.md --criterion F10 --wallet-account Private/5ya25h4Xc9GAmrGB2WrTEnEWtQKJwRwQx3Xfo2tucNcE --wallet-account Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN --wallet-account Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq --note Alpha/Beta/Gamma deployed as separate configured agents for storage/messaging/chain categories",
+      "criterion": "F10",
+      "message_ids": [],
+      "note": "Alpha/Beta/Gamma deployed as separate configured agents for storage/messaging/chain categories",
+      "recorded_at": "2026-06-25T09:18:14.674276+00:00",
+      "repo_sha": "343ac2e081297981b694c852970c4b7a867272bf",
+      "script": "scripts/verify_three_live_agents.py",
+      "status": "pass",
+      "task_ids": [],
+      "tx_hashes": [],
+      "wallet_accounts": [
+        "Private/5ya25h4Xc9GAmrGB2WrTEnEWtQKJwRwQx3Xfo2tucNcE",
+        "Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN",
+        "Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq"
+      ]
+    },
+    "F2": {
+      "artifacts": [
+        "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+        "docs/three-live-agents.md"
+      ],
+      "command": "/Users/evinova-self/Projects/logos-basecamp/lp-0008-autonomous-agent/scripts/write_strict_evidence_manifest.py add --status pass --script scripts/setup_three_live_agents.sh --script scripts/verify_three_live_agents.py --artifact /Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json --artifact docs/three-live-agents.md --criterion F2 --wallet-account Private/5ya25h4Xc9GAmrGB2WrTEnEWtQKJwRwQx3Xfo2tucNcE --wallet-account Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN --wallet-account Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq --note three distinct initialized/funded LEZ testnet agent accounts verified",
+      "criterion": "F2",
+      "message_ids": [],
+      "note": "three distinct initialized/funded LEZ testnet agent accounts verified",
+      "recorded_at": "2026-06-25T09:18:14.626386+00:00",
+      "repo_sha": "343ac2e081297981b694c852970c4b7a867272bf",
+      "script": "scripts/verify_three_live_agents.py",
+      "status": "pass",
+      "task_ids": [],
+      "tx_hashes": [],
+      "wallet_accounts": [
+        "Private/5ya25h4Xc9GAmrGB2WrTEnEWtQKJwRwQx3Xfo2tucNcE",
+        "Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN",
+        "Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq"
+      ]
+    },
     "PHASE0": {
       "artifacts": [
         "docs/prize-criteria-source.md",
@@ -42,10 +92,31 @@
       "task_ids": [],
       "tx_hashes": [],
       "wallet_accounts": []
+    },
+    "SR4": {
+      "artifacts": [
+        "/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json",
+        "docs/three-live-agents.md"
+      ],
+      "command": "/Users/evinova-self/Projects/logos-basecamp/lp-0008-autonomous-agent/scripts/write_strict_evidence_manifest.py add --status pass --script scripts/setup_three_live_agents.sh --script scripts/verify_three_live_agents.py --artifact /Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json --artifact docs/three-live-agents.md --criterion SR4 --wallet-account Private/5ya25h4Xc9GAmrGB2WrTEnEWtQKJwRwQx3Xfo2tucNcE --wallet-account Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN --wallet-account Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq --note reproducible three-agent setup evidence retained",
+      "criterion": "SR4",
+      "message_ids": [],
+      "note": "reproducible three-agent setup evidence retained",
+      "recorded_at": "2026-06-25T09:18:14.722533+00:00",
+      "repo_sha": "343ac2e081297981b694c852970c4b7a867272bf",
+      "script": "scripts/verify_three_live_agents.py",
+      "status": "pass",
+      "task_ids": [],
+      "tx_hashes": [],
+      "wallet_accounts": [
+        "Private/5ya25h4Xc9GAmrGB2WrTEnEWtQKJwRwQx3Xfo2tucNcE",
+        "Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN",
+        "Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq"
+      ]
     }
   },
   "repo": "Tranquil-Flow/lp-0008-autonomous-agent",
-  "repo_sha": "0bf9122c28a5e817bb5f513a571a9ec87103442e",
+  "repo_sha": "343ac2e081297981b694c852970c4b7a867272bf",
   "schema": "lp0008-strict-evidence-manifest-v1",
-  "updated_at": "2026-06-25T09:10:44.086485+00:00"
+  "updated_at": "2026-06-25T09:18:14.731337+00:00"
 }
