@@ -32,6 +32,7 @@ REQUIRED_FILES = [
     "docs/final-submission-preflight.md",
     "scripts/apply_final_video_url.py",
     "scripts/finalize_after_video.sh",
+    "scripts/check_lp0008_submission_window.py",
     "scaffold.toml",
 ]
 FORBIDDEN_PATTERNS = [
@@ -96,6 +97,12 @@ REQUIRED_PHRASES = {
         "FINALIZE_OK",
         "ask explicit approval",
         "validate-submission.sh",
+        "check_lp0008_submission_window.py",
+    ],
+    "scripts/check_lp0008_submission_window.py": [
+        "LP0008_SUBMISSION_WINDOW_OK",
+        "OPEN_LP0008_SUBMISSION_EXISTS",
+        "LP0008_COOLDOWN_NOT_READY",
     ],
     "docs/final-submission-preflight.md": [
         "ready except narrated video URL",

@@ -18,6 +18,7 @@ case "$VIDEO_URL" in
 esac
 
 cd "$IMPL_ROOT"
+python3 scripts/check_lp0008_submission_window.py
 LAMBDA_PRIZE_WORKTREE="$LAMBDA_ROOT" scripts/apply_final_video_url.py "$VIDEO_URL"
 python3 scripts/validate_acceptance_readiness.py
 git diff --check
