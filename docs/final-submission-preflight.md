@@ -11,6 +11,7 @@ State: ready except narrated video URL.
 - `SUBMISSION.md` has exactly one publication placeholder: `PENDING_VIDEO_URL`.
 - Lambda Prize PR must not be opened until the video URL is inserted and explicit approval is given.
 - `scripts/check_lp0008_submission_window.py` confirms there is no currently open LP-0008 Lambda Prize PR and that the same-builder cadence window is open. Current observed prior LP-0008 PRs are closed: #34 (Beach-Bum), #81/#85/#88 (retraca); none are from Tranquil-Flow.
+- `module.json` is present at repository root for the Lambda Prize/Basecamp mini-app validator and declares `logos.messaging`/A2A capabilities while preserving honest GUI proof boundaries.
 
 ## Record
 

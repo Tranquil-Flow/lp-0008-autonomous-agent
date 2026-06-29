@@ -1,0 +1,31 @@
+{
+  "schema": "logos.basecamp.module.v1",
+  "name": "agent_module",
+  "displayName": "LP-0008 Autonomous AI Agent Module",
+  "version": "0.1.0",
+  "type": "core-module",
+  "category": "agent",
+  "license": "MIT",
+  "description": "Logos Core module for an autonomous AI agent with wallet, storage, Logos Messaging owner/A2A transport, spending controls, and skill dispatch.",
+  "entrypoint": "agent_module_plugin",
+  "artifacts": {
+    "install": "nix build .#install",
+    "lgx": "nix build .#lgx"
+  },
+  "capabilities": [
+    "logos.core",
+    "logos.wallet",
+    "logos.storage",
+    "logos.messaging",
+    "logos.messaging.owner-channel",
+    "logos.messaging.a2a-transport",
+    "lez.wallet",
+    "a2a.agent-card",
+    "a2a.task-lifecycle"
+  ],
+  "ownerChannel": {
+    "transport": "logos.messaging",
+    "description": "Owner commands and approval requests are carried over a dedicated encrypted Logos Messaging topic. CLI evidence is provided; GUI owner-channel capture remains a video/evaluator-facing demonstration item."
+  },
+  "dependencies": []
+}

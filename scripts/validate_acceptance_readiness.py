@@ -34,6 +34,7 @@ REQUIRED_FILES = [
     "scripts/finalize_after_video.sh",
     "scripts/check_lp0008_submission_window.py",
     "scaffold.toml",
+    "module.json",
 ]
 FORBIDDEN_PATTERNS = [
     (re.compile(r"\b21 methods\b", re.I), "stale 21-method wording"),
@@ -143,6 +144,11 @@ REQUIRED_PHRASES = {
         "[modules.agent_module]",
         "path:.#lgx",
         "role = \"project\"",
+    ],
+    "module.json": [
+        "logos.messaging",
+        "a2a.task-lifecycle",
+        "nix build .#lgx",
     ],
 }
 
