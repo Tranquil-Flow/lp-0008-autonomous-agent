@@ -115,6 +115,9 @@ fi
 
 # Strict live gate inventory and all phase-specific hardening evidence.
 run_step strict-preflight scripts/preflight_strict_live_gates.sh
+run_step headless-deploy scripts/run_headless_deploy_evidence.py
+run_step skill-extension scripts/run_skill_extension_evidence.py
+run_step fresh-clone-repro scripts/run_fresh_clone_strict_repro.sh
 
 THREE_STATE="${LP0008_THREE_AGENT_STATE:-$HOME/lp0008-phase0/three_live_agents_strict_latest}"
 WALLET_CLI="${LP0008_WALLET_CLI:-$HOME/Projects/logos-basecamp/lp-0013-token-authorities/token-suite/onchain-program/target/release/wallet}"
