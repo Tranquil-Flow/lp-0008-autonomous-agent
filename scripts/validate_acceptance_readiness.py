@@ -35,6 +35,7 @@ REQUIRED_FILES = [
     "scripts/check_lp0008_submission_window.py",
     "scaffold.toml",
     "module.json",
+    "tests/validate_traceability_freshness.py",
 ]
 FORBIDDEN_PATTERNS = [
     (re.compile(r"\b21 methods\b", re.I), "stale 21-method wording"),
@@ -77,6 +78,9 @@ REQUIRED_PHRASES = {
         "Basecamp owner-channel",
         "transport.result.mode == live",
         "CU cost documented",
+        "headless Logos Core deployment",
+        "sidecar skill-extension",
+        "fresh-clone reproduction",
     ],
     "docs/cu-costs.md": [
         "CU cost and proof-mode notes",
@@ -149,6 +153,11 @@ REQUIRED_PHRASES = {
         "logos.messaging",
         "a2a.task-lifecycle",
         "nix build .#lgx",
+    ],
+    "tests/validate_traceability_freshness.py": [
+        "TRACEABILITY_FRESHNESS_OK",
+        "F3",
+        "EV1",
     ],
 }
 
