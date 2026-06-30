@@ -130,7 +130,7 @@ Defaults match the M4 Pro Basecamp workspace. Override paths when needed:
 
 ```bash
 LOGOSCORE_CLI=/path/to/logoscore \
-LOGOS_BASECAMP_ROOT=$HOME/Projects/logos-basecamp \
+LOGOS_BASECAMP_ROOT=/path/to/logos-basecamp \\
 LP0008_TEST_ROOT=$HOME/lp0008-phase0 \
 scripts/run_logoscore_integration.sh stage-c
 ```

@@ -16,7 +16,7 @@ Counts: PASS=15 WARN=2 FAIL=0
 | PASS | recommended | curl | /usr/bin/curl |
 | PASS | recommended | nc | /usr/bin/nc |
 | PASS | required | logoscore | $LP0008_TEST_ROOT/logoscore-cli/bin/logoscore |
-| PASS | required | rc3-wallet-binary | $HOME/Projects/logos-basecamp/lp-0013-token-authorities/token-suite/onchain-program/target/release/wallet |
+| PASS | required | rc3-wallet-binary | $LOGOS_BASECAMP_ROOT/lp-0013-token-authorities/token-suite/onchain-program/target/release/wallet |
 | PASS | required | funded-wallet-home | $LP0008_TEST_ROOT/rc3_faucet_wallet |
 | PASS | required | basecamp-source-cache | $HOME/Library/Caches/logos-scaffold/repos/basecamp |
 | PASS | required | basecamp-module-cache | $HOME/Library/Caches/logos-scaffold/basecamp |
