@@ -286,6 +286,10 @@ bool WalletBridge::init(const std::string&, const std::string&, const std::strin
     return false;
 }
 
+std::optional<std::pair<std::string, bool>> WalletBridge::findOwnedAccount(const std::string&) {
+    return std::nullopt;
+}
+
 std::optional<std::string> WalletBridge::ensureShieldedAccount(const std::string&) {
     return std::nullopt;
 }
