@@ -1,6 +1,6 @@
 # Strict default-skill matrix evidence
 
-- Evidence dir: `/Users/evinova-self/lp0008-phase0/strict_skill_matrix_20260629_234510`
+- Evidence dir: `/Users/evinova-self/lp0008-phase0/strict_skill_matrix_20260630_072644`
 - Registered skills: 27
 - Expected skills tested: 27
 

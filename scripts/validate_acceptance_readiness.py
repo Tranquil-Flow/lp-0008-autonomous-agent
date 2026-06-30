@@ -27,6 +27,9 @@ REQUIRED_FILES = [
     "scripts/run_three_use_cases_demo.sh",
     "scripts/run_resilience_evidence.sh",
     "scripts/run_final_strict_evidence.sh",
+    "scripts/run_a2a_schema_evidence.py",
+    "docs/a2a-schema-evidence.md",
+    "docs/a2a-schema-summary-latest.json",
     "docs/final-strict-evidence-gate.md",
     "scripts/record_final_video.sh",
     "docs/final-submission-preflight.md",
@@ -98,6 +101,20 @@ REQUIRED_PHRASES = {
         "payment_submitted",
         "summary.json",
     ],
+    "docs/a2a-schema-evidence.md": [
+        "A2A schema evidence",
+        "a2a.task.request",
+        "queued -> transport_sent -> working -> completed",
+        "Strict boundary",
+    ],
+    "scripts/run_a2a_schema_evidence.py": [
+        "A2A_SCHEMA_EVIDENCE_OK",
+        "protocolVersion",
+        "a2a.task.request",
+        "queued",
+        "transport_sent",
+        "completed",
+    ],
     "scripts/finalize_after_video.sh": [
         "FINALIZE_OK",
         "ask explicit approval",
@@ -136,6 +153,7 @@ REQUIRED_PHRASES = {
         "FINAL_STRICT_EVIDENCE_COMPLETE",
         "run_step_allow_blocker",
         "paid-a2a-live",
+        "a2a-schema",
         "strict-skill-matrix",
     ],
     "scripts/record_final_video.sh": [
@@ -214,7 +232,7 @@ def main() -> int:
         if needle not in gate_text:
             fail(f"final evidence gate missing {needle}")
     strict_text = strict_gate.read_text(errors="ignore")
-    for needle in ["pre-video-bundle", "paid-a2a-live", "basecamp-owner-approval", "program-cu-boundary", "strict-skill-matrix", "FINAL_STRICT_EVIDENCE_COMPLETE"]:
+    for needle in ["pre-video-bundle", "a2a-schema", "paid-a2a-live", "basecamp-owner-approval", "program-cu-boundary", "strict-skill-matrix", "FINAL_STRICT_EVIDENCE_COMPLETE"]:
         if needle not in strict_text:
             fail(f"strict evidence gate missing {needle}")
 

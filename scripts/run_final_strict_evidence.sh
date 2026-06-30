@@ -122,6 +122,7 @@ run_step fresh-clone-repro scripts/run_fresh_clone_strict_repro.sh
 THREE_STATE="${LP0008_THREE_AGENT_STATE:-$HOME/lp0008-phase0/three_live_agents_strict_latest}"
 WALLET_CLI="${LP0008_WALLET_CLI:-$HOME/Projects/logos-basecamp/lp-0013-token-authorities/token-suite/onchain-program/target/release/wallet}"
 run_step three-live-agents scripts/verify_three_live_agents.py --state-root "$THREE_STATE" --wallet-cli "$WALLET_CLI"
+run_step a2a-schema scripts/run_a2a_schema_evidence.py
 run_step_allow_blocker paid-a2a-live PAID_A2A_BLOCKED scripts/run_paid_a2a_live_evidence.py
 run_step basecamp-owner-approval scripts/run_basecamp_owner_approval_evidence.py
 run_step program-cu-boundary scripts/run_program_cu_boundary_evidence.py

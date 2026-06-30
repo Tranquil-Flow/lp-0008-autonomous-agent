@@ -1,0 +1,39 @@
+{
+  "agent_id": "schema-agent",
+  "assertions": [
+    "Agent Card has non-empty string field name",
+    "Agent Card has non-empty string field description",
+    "Agent Card has non-empty string field version",
+    "Agent Card has non-empty string field protocol",
+    "Agent Card has non-empty string field protocolVersion",
+    "Agent Card has non-empty string field status",
+    "Agent Card has non-empty string field agent_id",
+    "Agent Card has non-empty string field discovery_topic",
+    "Agent Card has non-empty string field task_topic",
+    "Agent Card has non-empty string field owner_topic",
+    "Agent Card uses protocol=a2a and protocolVersion=1.0",
+    "Agent Card advertises Logos identity authentication",
+    "Agent Card advertises LEZ payment mechanism",
+    "Agent Card advertises A2A lifecycle and messaging skills",
+    "task lifecycle emits queued -> transport_sent -> working -> completed",
+    "transport publishes an a2a.task.request envelope to the discovered task_topic",
+    "envelope task_id/from/to/skill/params bind to the completed task",
+    "discovery registry returns the schema-agent Agent Card"
+  ],
+  "command_line": "scripts/run_a2a_schema_evidence.py",
+  "evidence_dir": "/Users/evinova-self/lp0008-phase0/a2a_schema_20260630_072440",
+  "protocol": "a2a",
+  "protocolVersion": "1.0",
+  "repo_sha": "773812cfa9e5af4e19e7a76c91d1d5d221fabbda",
+  "schema": "lp0008-a2a-schema-evidence-v1",
+  "skill_count": 27,
+  "task_events": [
+    "queued",
+    "transport_sent",
+    "working",
+    "completed",
+    "payment_submitted"
+  ],
+  "task_id": "task-1782804302030-0",
+  "task_topic": "/lp0008/1/a2a-schema/tasks"
+}
