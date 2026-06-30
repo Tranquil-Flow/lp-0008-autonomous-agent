@@ -48,12 +48,16 @@ def gh_runs(repo: str, branch: str, limit: int) -> list[dict]:
 
 
 def rest_runs(repo: str, branch: str, limit: int) -> list[dict]:
-    url = f"https://api.github.com/repos/{repo}/actions/runs?branch={branch}&per_page={limit}"
+    # The public Actions API branch query can be cache/bot brittle; fetch recent
+    # runs and filter head_branch locally so the fallback behaves like gh.
+    url = f"https://api.github.com/repos/{repo}/actions/runs?per_page={limit}"
     req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "lp0008-ci-check"})
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read().decode())
     runs = []
     for r in data.get("workflow_runs", []):
+        if r.get("head_branch") != branch:
+            continue
         runs.append({
             "databaseId": r.get("id"),
             "status": r.get("status"),
