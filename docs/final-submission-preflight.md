@@ -1,66 +1,46 @@
 # LP-0008 final submission preflight
 
-State: non-video repository hardening complete or explicitly upstream/tooling-blocked; final publication still waits for narrated video URL, exact-SHA revalidation, and explicit approval of the retained blocker disclosures.
+Purpose: reviewer-facing checklist for the last mile before opening a public Lambda Prize PR. It is intentionally conservative: non-video repository hardening complete or explicitly upstream/tooling-blocked is necessary, but not enough, because the final narrated video URL and explicit approval are still required.
 
-## What is complete
+## Required order
 
-- Implementation repo default branch is the reviewer clone target.
-- `scripts/run_final_strict_evidence.sh` is the primary umbrella non-video gate and emits `FINAL_STRICT_EVIDENCE_COMPLETE` with `ok` or honest `ok_with_blockers` status. The older `scripts/run_final_pre_video_evidence.sh` remains part of that strict gate and emits `PRE_VIDEO_EVIDENCE_OK`.
-- `scripts/record_final_video.sh` is the recording script.
-- `docs/final-video-audio-narration.md` follows the recording script section order.
-- `SUBMISSION.md` has exactly one publication placeholder: `PENDING_VIDEO_URL`.
-- Lambda Prize PR must not be opened until the video URL is inserted and explicit approval is given.
-- `scripts/check_lp0008_submission_window.py` confirms there is no currently open LP-0008 Lambda Prize PR and that the same-builder cadence window is open. Current observed prior LP-0008 PRs are closed: #34 (Beach-Bum), #81/#85/#88 (retraca); none are from Tranquil-Flow.
-- `module.json` is present at repository root for the Lambda Prize/Basecamp mini-app validator and declares `logos.messaging`/A2A capabilities while preserving honest GUI proof boundaries.
-
-## Record
-
-From the laptop terminal:
+1. Start from a clean checkout of the public repository and confirm `git status --short` is empty.
+2. Run the strict umbrella gate:
 
 ```bash
-ssh -t m4pro 'bash -lc '''
-set -euo pipefail
-PATH=/opt/homebrew/bin:$HOME/.cargo/bin:$HOME/bin:$PATH
-cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent
-bash scripts/record_final_video.sh
-''''
+scripts/run_final_strict_evidence.sh
 ```
 
-## Patch after upload
+Expected status before upstream wallet/program APIs improve: `FINAL_STRICT_EVIDENCE_COMPLETE` with `ok_with_blockers`, not silent success. Blockers must be limited to documented upstream/tooling limits.
+
+3. Run reviewer-facing validators:
 
 ```bash
-ssh m4pro 'bash -lc '''
-set -euo pipefail
-cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent
-LAMBDA_PRIZE_WORKTREE=$HOME/lp0008-phase0/lambda-prize-local   scripts/apply_final_video_url.py "VIDEO_URL_HERE"
+python3 tests/validate_traceability_freshness.py
 python3 scripts/validate_acceptance_readiness.py
-git diff --check
-git status --short
-''''
+python3 scripts/audit_lp0008_prize_criteria.py
+python3 scripts/check_lp0008_submission_window.py
 ```
 
-Then commit/push the implementation repo video URL patch, run CI on the exact SHA, validate the Lambda Prize local draft, and ask for explicit approval before opening or updating any public Lambda Prize PR.
+4. Record the narrated demo using `scripts/record_final_video.sh` and the narration in `docs/final-video-audio-narration.md`.
+5. Replace `PENDING_VIDEO_URL` with the uploaded reviewer-accessible video URL:
 
-## Claims to keep bounded
+```bash
+scripts/finalize_after_video.sh "https://example.invalid/final-video"
+```
 
-Claim:
+6. Re-run validators after URL insertion. For final publication, `python3 scripts/audit_lp0008_prize_criteria.py --final` must pass.
+7. Confirm CI is green for the exact public SHA:
 
-- loadable Logos Core module and C ABI dispatch verification;
-- live storage/delivery co-load where APIs exist;
-- live Logos Messaging A2A transport;
-- three configured agents and three illustrative use-case evidence;
-- owner approval persistence, timeout guard, and skill failure isolation;
-- retained public-testnet wallet send evidence.
+```bash
+python3 scripts/check_github_ci.py
+```
 
-Do not claim:
+8. Ask explicit approval before opening the public Lambda Prize PR.
 
-- separate Basecamp GUI owner-channel proof;
-- live inter-agent LEZ payment tied to task acceptance;
-- live `program.call`/`program.deploy` execution;
-- RISC0 proof-mode program execution;
-- acceptance guaranteed by validators.
+## Claim boundaries
 
-
-## Final strict gate
-
-Run `scripts/run_final_strict_evidence.sh` before recording the final video, and note that `scripts/record_final_video.sh` now runs it as the first substantive evidence scene. Current expected status before the upstream wallet/program APIs are fixed is `ok_with_blockers`, with no failed shell steps and explicit blocked evidence for rc3 wallet transfer proving.
+- The strict gate is the authoritative non-video evidence bundle.
+- The older `scripts/run_final_pre_video_evidence.sh` remains available and may be nested inside the strict gate; it is not the final readiness claim by itself.
+- The repository must continue to say `PENDING_VIDEO_URL` until the real uploaded narrated video exists.
+- Paid A2A LEZ tx binding and in-process program deploy/call/CU proof remain upstream/tooling-blocked unless fresh evidence proves otherwise.

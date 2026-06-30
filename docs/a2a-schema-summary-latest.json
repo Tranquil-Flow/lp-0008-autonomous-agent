@@ -21,7 +21,7 @@
     "discovery registry returns the schema-agent Agent Card"
   ],
   "command_line": "scripts/run_a2a_schema_evidence.py",
-  "evidence_dir": "/Users/evinova-self/lp0008-phase0/a2a_schema_20260630_180945",
+  "evidence_dir": "$LP0008_TEST_ROOT/a2a_schema_20260630_180945",
   "protocol": "a2a",
   "protocolVersion": "1.0",
   "repo_sha": "3c9203fb2c893479d362e21c88517ba3ade04aba",

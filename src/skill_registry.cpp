@@ -39,6 +39,13 @@ std::string SkillRegistry::dispatch(const std::string& skill_name, const std::st
         return err.dump();
     }
     try {
+        if (!it->second.handler) {
+            nlohmann::json err;
+            err["error"] = "skill_has_no_registered_handler";
+            err["skill"] = skill_name;
+            err["message"] = "skill metadata is registered, but dispatch is handled by AgentModuleImpl";
+            return err.dump();
+        }
         return it->second.handler(args_json);
     } catch (const std::exception& e) {
         nlohmann::json err;

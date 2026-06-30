@@ -145,13 +145,13 @@ scripts/run_logoscore_integration.sh stage-c
 
 ## Final pre-video evidence gate
 
-Before recording the narrated Lambda Prize video, run:
+Before recording the narrated Lambda Prize video, run the strict umbrella gate:
 
 ```bash
-scripts/run_final_pre_video_evidence.sh
+scripts/run_final_strict_evidence.sh
 ```
 
-This runs every non-video proof: Nix build, raw C ABI all-skill demo, Logos Core storage/delivery co-load, three-agent A2A lifecycle proof, readiness validator, and the optional live LEZ wallet send verifier when funded-wallet environment variables are set.
+This runs the non-video proof bundle: Nix build, raw C ABI demo, Logos Core storage/delivery co-load, three-agent identity/use-case evidence, A2A schema and transport checks, readiness validators, and explicit blocker capture for upstream wallet/program API limits. The legacy `scripts/run_final_pre_video_evidence.sh` remains nested inside the strict gate unless `LP0008_SKIP_PREVIDEO_BUNDLE=1` is set.
 
 See `docs/strict-success-criteria-evidence.md` for the exact success-criteria mapping.
 

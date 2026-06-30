@@ -60,6 +60,31 @@ def test_final_strict_gate_wires_new_nonvideo_evidence_scripts():
     assert gate.index("fresh-clone-repro") < gate.index("acceptance-readiness")
 
 
+def test_skill_registry_metadata_dispatch_fails_closed():
+    require("src/skill_registry.cpp", [
+        "skill_has_no_registered_handler",
+        "!it->second.handler",
+    ])
+
+
+def test_delivery_group_paths_initialize_delivery_client_before_live_calls():
+    impl = require("src/agent_module_impl.cpp", [
+        "messagingJoin",
+        "messagingCreateGroup",
+    ])
+    assert 'validContentTopic && ensureDeliveryReady() && tryDeliveryCall("join"' in impl
+    assert 'ensureDeliveryReady() && tryDeliveryCall("createGroup"' in impl
+
+
+def test_spending_gate_rejects_malformed_or_128bit_unsafe_amounts():
+    require("src/spending_gate.cpp", [
+        "invalid_spending_gate_state",
+        "amount_le16_exceeds_supported_64bit_range",
+        "fail closed rather than truncating",
+        "addDecimal",
+    ])
+
+
 if __name__ == "__main__":
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     for test in tests:

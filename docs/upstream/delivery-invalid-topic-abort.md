@@ -38,11 +38,11 @@ Direct Logos Core repro after patch:
 
 Evidence directory:
 
-- /Users/evinova-self/lp0008-phase0/delivery_invalid_topic_fix_1781645626
+- $LP0008_TEST_ROOT/delivery_invalid_topic_fix_1781645626
 
 Assertion output:
 
-    ASSERT direct delivery invalid-topic failure is non-fatal: OK rc=4 base=/Users/evinova-self/lp0008-phase0/delivery_invalid_topic_fix_1781645626
+    ASSERT direct delivery invalid-topic failure is non-fatal: OK rc=4 base=$LP0008_TEST_ROOT/delivery_invalid_topic_fix_1781645626
 
 Current LP-0008 mitigation
 

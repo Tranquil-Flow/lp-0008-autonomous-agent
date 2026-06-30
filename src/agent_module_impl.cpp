@@ -676,7 +676,7 @@ std::string AgentModuleImpl::messagingJoin(const std::string& groupId)
 
     // Try real delivery_module join only for valid LIP-23 content topics.
     json realResult;
-    if (validContentTopic && tryDeliveryCall("join", json::array({groupId}), realResult)) {
+    if (validContentTopic && ensureDeliveryReady() && tryDeliveryCall("join", json::array({groupId}), realResult)) {
         json r;
         r["joined"] = true;
         r["group_id"] = groupId;
@@ -713,7 +713,7 @@ std::string AgentModuleImpl::messagingCreateGroup(const std::string& members)
 
     // Try real delivery_module create_group
     json realResult;
-    if (tryDeliveryCall("createGroup", json::array({members}), realResult)) {
+    if (ensureDeliveryReady() && tryDeliveryCall("createGroup", json::array({members}), realResult)) {
         json r;
         r["group_id"] = realResult.value("group_id", realResult.value("id", ""));
         r["members"] = memberList;

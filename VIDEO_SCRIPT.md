@@ -1,6 +1,6 @@
 # LP-0008 Final Demo Video Script
 
-Target length: 8-12 minutes. Terminal-only recording. Record from this computer/laptop terminal, but execute the demo on the M4 Pro. The safest path is the SSH command block in `docs/final-video-recording-kit.md`; that command is launched locally and runs every proof on `m4pro`. If you are already logged into the M4 Pro, run `scripts/record_final_video.sh` directly there. The first substantive proof scene is the strict umbrella gate, `scripts/run_final_strict_evidence.sh`, which records pass/blocker evidence instead of hiding upstream limitations.
+Target length: 8-12 minutes. Terminal-oriented recording from a clean checkout on a machine with the required Logos/Nix/wallet prerequisites. Use the command in `docs/final-video-recording-kit.md` or run `scripts/record_final_video.sh` directly from the repository root. The first substantive proof scene is the strict umbrella gate, `scripts/run_final_strict_evidence.sh`, which records pass/blocker evidence instead of hiding upstream limitations.
 
 ## Claims to make
 
@@ -23,7 +23,7 @@ Target length: 8-12 minutes. Terminal-only recording. Record from this computer/
 On screen:
 
 ```bash
-cd ~/Projects/logos-basecamp/lp-0008-autonomous-agent
+cd /path/to/lp-0008-autonomous-agent
 git status -sb
 git log -1 --oneline
 git ls-remote origin refs/heads/main refs/heads/feat/real-lez-wallet

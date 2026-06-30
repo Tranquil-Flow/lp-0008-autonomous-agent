@@ -45,6 +45,7 @@ EXPECTED_BLOCKED = {
 }
 
 EXPECTED_ACCEPTED_RISK = {
+    "F2": "Accepted residual risk",
     "S2": "Accepted residual risk",
 }
 

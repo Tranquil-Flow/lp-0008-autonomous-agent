@@ -1,6 +1,6 @@
 # LP-0008 three live agents evidence
 
-Generated from `/Users/evinova-self/lp0008-phase0/three_live_agents_strict_latest/three_live_agents_summary.json`.
+Generated from `$LP0008_TEST_ROOT/three_live_agents_strict_latest/three_live_agents_summary.json`.
 
 | Agent | Category | Wallet CLI account ID | Agent wallet account | Balance | Task topic | Owner topic | Skills |
 |---|---|---|---|---:|---|---|---:|

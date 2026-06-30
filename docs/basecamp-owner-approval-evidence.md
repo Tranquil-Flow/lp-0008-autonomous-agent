@@ -2,7 +2,7 @@
 
 This evidence proves Basecamp artifact readiness plus the separate owner-channel approval flow through logoscore.
 
-- Evidence dir: `/Users/evinova-self/lp0008-phase0/basecamp_owner_approval_20260630_181102`
+- Evidence dir: `$LP0008_TEST_ROOT/basecamp_owner_approval_20260630_181102`
 - Owner topic: `/lp0008/1/basecamp-owner/owner`
 - Rejected approval id: `appr-1782843092826-0`
 - Request owner notification message id: `a9a0176c793cbde1172c`
