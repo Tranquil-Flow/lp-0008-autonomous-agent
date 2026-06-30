@@ -1,6 +1,6 @@
 # Strict default-skill matrix evidence
 
-- Evidence dir: `$LP0008_TEST_ROOT/strict_skill_matrix_20260630_181156`
+- Evidence dir: `$LP0008_TEST_ROOT/strict_skill_matrix_20260630_192941`
 - Registered skills: 27
 - Expected skills tested: 27
 

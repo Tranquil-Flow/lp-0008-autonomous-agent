@@ -21,10 +21,10 @@
     "discovery registry returns the schema-agent Agent Card"
   ],
   "command_line": "scripts/run_a2a_schema_evidence.py",
-  "evidence_dir": "$LP0008_TEST_ROOT/a2a_schema_20260630_180945",
+  "evidence_dir": "$LP0008_TEST_ROOT/a2a_schema_20260630_192725",
   "protocol": "a2a",
   "protocolVersion": "1.0",
-  "repo_sha": "3c9203fb2c893479d362e21c88517ba3ade04aba",
+  "repo_sha": "05d8184569b8e80ca4df655aad9c1312c6e4ceda",
   "schema": "lp0008-a2a-schema-evidence-v1",
   "skill_count": 27,
   "task_events": [
@@ -34,6 +34,6 @@
     "completed",
     "payment_submitted"
   ],
-  "task_id": "task-1782843007372-0",
+  "task_id": "task-1782847666494-0",
   "task_topic": "/lp0008/1/a2a-schema/tasks"
 }
