@@ -51,7 +51,11 @@ def rest_runs(repo: str, branch: str, limit: int) -> list[dict]:
     # The public Actions API branch query can be cache/bot brittle; fetch recent
     # runs and filter head_branch locally so the fallback behaves like gh.
     url = f"https://api.github.com/repos/{repo}/actions/runs?per_page={limit}"
-    req = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "lp0008-ci-check"})
+    headers = {"Accept": "application/vnd.github+json", "User-Agent": "lp0008-ci-check"}
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read().decode())
     runs = []
