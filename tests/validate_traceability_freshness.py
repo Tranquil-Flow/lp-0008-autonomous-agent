@@ -19,18 +19,36 @@ STALE_SHAS = {
 }
 
 EXPECTED_NOT_PLANNED = {
+    "F1": "Met",
     "F3": "Met",
+    "F4": "Met",
+    "F5": "Met",
+    "F9": "Met",
+    "F11": "Met",
     "U1": "Met",
+    "U2": "Met",
+    "R1": "Met",
+    "R2": "Met",
+    "S3": "Met",
+    "S4": "Met",
     "SR1": "Met",
     "SR2": "Met",
+    "SR5": "Met",
     "EV1": "Met",
-    "S3": "Met",
 }
 
 EXPECTED_BLOCKED = {
     "F8": "Blocked by upstream API",
+    "P1": "Blocked by upstream API",
+    "S1": "Blocked by upstream API",
     "S5": "Blocked by upstream API",
 }
+
+EXPECTED_ACCEPTED_RISK = {
+    "S2": "Accepted residual risk",
+}
+
+ALLOWED_PLANNED = {"S6", "SR3"}
 
 
 def fail(msg: str) -> None:
@@ -67,6 +85,22 @@ def main() -> None:
         if got != expected:
             fail(f"{row} status {got!r}, expected {expected!r}")
 
+    for row, expected in EXPECTED_ACCEPTED_RISK.items():
+        got = row_status(trace, row)
+        if got != expected:
+            fail(f"{row} status {got!r}, expected {expected!r}")
+
+    planned = []
+    for line in trace.splitlines():
+        if not line.startswith("| ") or line.startswith("| ID ") or line.startswith("|---"):
+            continue
+        cols = [c.strip() for c in line.strip().strip("|").split("|")]
+        if len(cols) >= 7 and cols[6] == "Planned":
+            planned.append(cols[0])
+    unexpected = [row for row in planned if row not in ALLOWED_PLANNED]
+    if unexpected:
+        fail("unexpected non-video Planned rows: " + ", ".join(unexpected))
+
     if "headless Logos Core deployment" not in ready:
         fail("readiness matrix missing headless deployment hardening")
     if "sidecar skill-extension" not in ready:
@@ -74,7 +108,7 @@ def main() -> None:
     if "fresh-clone reproduction" not in ready:
         fail("readiness matrix missing fresh-clone hardening")
 
-    print("TRACEABILITY_FRESHNESS_OK rows=%d" % (len(EXPECTED_NOT_PLANNED) + len(EXPECTED_BLOCKED)))
+    print("TRACEABILITY_FRESHNESS_OK rows=%d planned=%s" % (len(EXPECTED_NOT_PLANNED) + len(EXPECTED_BLOCKED) + len(EXPECTED_ACCEPTED_RISK), ",".join(planned)))
 
 
 if __name__ == "__main__":

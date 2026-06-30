@@ -1,6 +1,6 @@
 # LP-0008 final submission preflight
 
-State: ready except narrated video URL.
+State: non-video repository hardening complete or explicitly upstream/tooling-blocked; final publication still waits for narrated video URL, exact-SHA revalidation, and explicit approval of the retained blocker disclosures.
 
 ## What is complete
 

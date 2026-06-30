@@ -79,7 +79,7 @@ REQUIRED_PHRASES = {
         "5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3",
     ],
     "docs/submission-readiness-matrix.md": [
-        "not ready for final Lambda Prize submission yet",
+        "non-video evidence is closed or explicitly upstream/tooling-blocked",
         "Basecamp owner-channel",
         "transport.result.mode == live",
         "CU cost documented",
@@ -143,7 +143,7 @@ REQUIRED_PHRASES = {
         "LP0008_COOLDOWN_NOT_READY",
     ],
     "docs/final-submission-preflight.md": [
-        "ready except narrated video URL",
+        "non-video repository hardening complete or explicitly upstream/tooling-blocked",
         "PENDING_VIDEO_URL",
         "explicit approval",
     ],

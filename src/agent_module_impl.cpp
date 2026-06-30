@@ -153,10 +153,18 @@ void AgentModuleImpl::ensureWallet()
     auto& cfg = agentConfig();
     const std::string walletDir = agent_persistence::stateDir() + "/wallet";
     if (m_wallet.init(walletDir, cfg.sequencer_addr)) {
-        if (auto acct = m_wallet.ensureShieldedAccount(cfg.wallet_account_hex)) {
-            m_agentAccount = *acct;
-            if (cfg.wallet_account_hex != *acct) {
-                cfg.wallet_account_hex = *acct;
+        if (auto acct = m_wallet.findOwnedAccount(cfg.wallet_account_hex)) {
+            m_agentAccount = acct->first;
+            m_agentAccountIsPublic = acct->second;
+            if (cfg.wallet_account_hex != m_agentAccount) {
+                cfg.wallet_account_hex = m_agentAccount;
+                cfg.save();
+            }
+        } else if (auto shielded = m_wallet.ensureShieldedAccount(cfg.wallet_account_hex)) {
+            m_agentAccount = *shielded;
+            m_agentAccountIsPublic = false;
+            if (cfg.wallet_account_hex != *shielded) {
+                cfg.wallet_account_hex = *shielded;
                 cfg.save();
             }
         }
@@ -340,6 +348,7 @@ std::string AgentModuleImpl::metaStatus()
     wstatus["live"] = m_wallet.live();
     wstatus["account"] = m_agentAccount;
     wstatus["mode"] = (m_wallet.live() && !m_agentAccount.empty()) ? "live" : "simulated";
+    if (!m_agentAccount.empty()) wstatus["privacy"] = m_agentAccountIsPublic ? "public" : "private";
     if (m_wallet.live()) wstatus["sequencer"] = m_wallet.sequencerAddr();
     r["wallet"] = wstatus;
 
@@ -743,10 +752,10 @@ std::string AgentModuleImpl::messagingCreateGroup(const std::string& members)
 std::string AgentModuleImpl::walletBalance()
 {
     ensureWallet();
-    // Real path: query the agent's shielded balance from the LEZ wallet.
+    // Real path: query the agent wallet balance from LEZ.
     if (m_wallet.live() && !m_agentAccount.empty()) {
         json r;
-        if (auto bal = m_wallet.balanceDecimal(m_agentAccount, /*is_public=*/false)) {
+        if (auto bal = m_wallet.balanceDecimal(m_agentAccount, m_agentAccountIsPublic)) {
             r["balance"] = *bal;
         } else {
             r["balance"] = "0";
@@ -782,11 +791,15 @@ json AgentModuleImpl::executeWalletTransfer(const std::string& recipient, const 
     bool submitted = false;
 
     if (m_wallet.live() && !m_agentAccount.empty()) {
-        // Real path: deshielded transfer from the agent's shielded account to
-        // the public recipient. Emits a RISC0 proof under RISC0_DEV_MODE=0.
+        // Real path: transfer from the configured agent wallet identity.
+        // Private accounts deshield to public recipients; public accounts use the
+        // public transfer path so paid-A2A can keep moving when rc3 private
+        // proving is blocked by upstream authenticated-transfer assertions.
         m_wallet.syncToCurrentBlock();
         auto amt = agent::WalletBridge::le16FromHex(amountLe16);
-        auto res = m_wallet.transferDeshielded(m_agentAccount, recipient, amt);
+        auto res = m_agentAccountIsPublic
+            ? m_wallet.transferPublic(m_agentAccount, recipient, amt)
+            : m_wallet.transferDeshielded(m_agentAccount, recipient, amt);
         mode = "live";
         submitted = res.ok;
         txHash = res.tx_hash;
@@ -1103,7 +1116,8 @@ std::string AgentModuleImpl::agentCard()
                          : (!m_agentAccount.empty()
                             ? m_agentAccount
                             : (instanceId().empty() ? "default-agent" : instanceId()));
-    card["account"] = m_agentAccount;  // LEZ shielded account (empty in simulated mode)
+    card["account"] = m_agentAccount;  // LEZ wallet account (empty in simulated mode)
+    card["account_privacy"] = m_agentAccountIsPublic ? "public" : "private";
     card["discovery_topic"] = cfg.discovery_topic;
     card["task_topic"] = cfg.task_topic;
     card["owner_topic"] = cfg.owner_topic;

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <utility>
 
 // Opaque FFI handle, forward-declared so this header doesn't leak <wallet_ffi.h>.
 struct WalletHandle;
@@ -46,6 +47,9 @@ public:
 
     bool live() const { return handle_ != nullptr; }
     std::string lastError() const;
+
+    /** Return an owned account from the wallet. If preferred_b58 is present, prefer it across public/private entries. */
+    std::optional<std::pair<std::string, bool>> findOwnedAccount(const std::string& preferred_b58 = "");
 
     /** Ensure the agent owns a private (shielded) account; return its base58 id. */
     std::optional<std::string> ensureShieldedAccount(const std::string& preferred_b58 = "");

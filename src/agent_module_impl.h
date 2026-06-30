@@ -94,7 +94,8 @@ private:
     // Real LEZ wallet (logos-execution-zone wallet-ffi). Falls back to
     // simulated mode when the wallet cannot be brought up.
     agent::WalletBridge m_wallet;
-    std::string m_agentAccount;  // base58 of the agent's shielded account ("" if simulated)
+    std::string m_agentAccount;  // base58 of the agent wallet account ("" if simulated)
+    bool m_agentAccountIsPublic = false;  // true when configured wallet_account_hex is a public owned account
     bool m_walletTried = false;  // guards one-shot lazy init
 
     // Helpers

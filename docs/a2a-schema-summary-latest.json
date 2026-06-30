@@ -21,10 +21,10 @@
     "discovery registry returns the schema-agent Agent Card"
   ],
   "command_line": "scripts/run_a2a_schema_evidence.py",
-  "evidence_dir": "/Users/evinova-self/lp0008-phase0/a2a_schema_20260630_072440",
+  "evidence_dir": "/Users/evinova-self/lp0008-phase0/a2a_schema_20260630_180445",
   "protocol": "a2a",
   "protocolVersion": "1.0",
-  "repo_sha": "773812cfa9e5af4e19e7a76c91d1d5d221fabbda",
+  "repo_sha": "e2a25ba429656741f22c624a9c2e767e02ec59a7",
   "schema": "lp0008-a2a-schema-evidence-v1",
   "skill_count": 27,
   "task_events": [
@@ -34,6 +34,6 @@
     "completed",
     "payment_submitted"
   ],
-  "task_id": "task-1782804302030-0",
+  "task_id": "task-1782842706076-0",
   "task_topic": "/lp0008/1/a2a-schema/tasks"
 }

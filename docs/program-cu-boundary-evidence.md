@@ -2,7 +2,7 @@
 
 This evidence closes the module-level program skill boundary without overclaiming live program submission.
 
-- Evidence dir: `/Users/evinova-self/lp0008-phase0/program_cu_boundary_20260630_072622`
+- Evidence dir: `/Users/evinova-self/lp0008-phase0/program_cu_boundary_20260630_180641`
 - `program.query` returns simulated mode with explicit unavailable-live-query note.
 - `program.call` fails closed with `submitted=false` and `live_program_call_not_available`.
 - `program.deploy` fails closed for existing binaries and reports `binary_not_found` for missing binaries.

@@ -121,29 +121,35 @@ bool WalletBridge::init(const std::string& state_dir,
     return handle_ != nullptr;
 }
 
+std::optional<std::pair<std::string, bool>> WalletBridge::findOwnedAccount(const std::string& preferred_b58) {
+    if (!handle_) return std::nullopt;
+    FfiAccountList list{};
+    if (wallet_ffi_list_accounts(handle_, &list) != SUCCESS) return std::nullopt;
+
+    std::optional<std::pair<std::string, bool>> found_private;
+    std::optional<std::pair<std::string, bool>> found_any;
+    std::optional<std::pair<std::string, bool>> preferred;
+    for (uintptr_t i = 0; i < list.count; ++i) {
+        const bool is_public = list.entries[i].is_public;
+        auto id = idToBase58(list.entries[i].account_id);
+        if (!found_any) found_any = std::make_pair(id, is_public);
+        if (!is_public && !found_private) found_private = std::make_pair(id, false);
+        if (!preferred_b58.empty() && id == preferred_b58) {
+            preferred = std::make_pair(id, is_public);
+            break;
+        }
+    }
+    wallet_ffi_free_account_list(&list);
+    if (preferred) return preferred;
+    if (found_private) return found_private;
+    return found_any;
+}
+
 std::optional<std::string> WalletBridge::ensureShieldedAccount(const std::string& preferred_b58) {
     if (!handle_) return std::nullopt;
 
-    // Reuse an existing private account if the wallet already has one. When the
-    // operator configured wallet_account_hex, prefer that exact owned private
-    // identity so funded wallets can be mounted into the agent state dir.
-    FfiAccountList list{};
-    if (wallet_ffi_list_accounts(handle_, &list) == SUCCESS) {
-        std::optional<std::string> found;
-        std::optional<std::string> preferred;
-        for (uintptr_t i = 0; i < list.count; ++i) {
-            if (!list.entries[i].is_public) {
-                auto id = idToBase58(list.entries[i].account_id);
-                if (!found) found = id;
-                if (!preferred_b58.empty() && id == preferred_b58) {
-                    preferred = id;
-                    break;
-                }
-            }
-        }
-        wallet_ffi_free_account_list(&list);
-        if (preferred) return preferred;
-        if (found) return found;
+    if (auto acct = findOwnedAccount(preferred_b58)) {
+        if (!acct->second) return acct->first;
     }
 
     // Otherwise mint a fresh shielded account.

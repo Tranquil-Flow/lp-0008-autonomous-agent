@@ -17,8 +17,8 @@ BASE.mkdir(parents=True, exist_ok=True)
 ENV=os.environ.copy(); ENV['PATH']=f"/opt/homebrew/bin:{HOME}/.cargo/bin:{HOME}/bin:"+ENV.get('PATH','')
 WALLET_CLI=pathlib.Path(ENV.get('LP0008_RC3_WALLET_CLI', str(HOME/'Projects/logos-basecamp/lp-0013-token-authorities/token-suite/onchain-program/target/release/wallet')))
 WALLET_HOME=pathlib.Path(ENV.get('LP0008_LIVE_WALLET_HOME', str(HOME/'lp0008-phase0/rc3_faucet_wallet')))
-ALPHA_PRIVATE=ENV.get('LP0008_PAID_A2A_ALPHA_PRIVATE','Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq')
-BETA_PRIVATE=ENV.get('LP0008_PAID_A2A_BETA_PRIVATE','Private/E8HwiTyQe4H9HK7icTvn95HQMnzx49mP9A2ddtMLpNaN')
+ALPHA_ACCOUNT=ENV.get('LP0008_PAID_A2A_ALPHA_ACCOUNT','Private/27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq')
+BETA_AGENT_ID=ENV.get('LP0008_PAID_A2A_BETA_AGENT_ID','beta-messaging')
 BETA_PUBLIC=ENV.get('LP0008_PAID_A2A_BETA_PUBLIC','Public/6iArKUXxhUJqS7kCaPNhwMWt3ro71PDyBj7jwAyE2VQV')
 AMOUNT=ENV.get('LP0008_PAID_A2A_AMOUNT_LE16','01000000000000000000000000000000')
 
@@ -59,7 +59,7 @@ run('build-delivery', ['nix','build','.#install','--print-out-paths'], cwd=DELIV
 cli=OUT/'logoscore-cli'/'bin'/'logoscore'
 if not cli.exists(): run('build-logoscore-cli', ['nix','build','github:logos-co/logos-logoscore-cli#default','--out-link',str(OUT/'logoscore-cli')], timeout=600)
 
-ok, alpha_bal, _ = wallet_get(ALPHA_PRIVATE, WALLET_HOME)
+ok, alpha_bal, _ = wallet_get(ALPHA_ACCOUNT, WALLET_HOME)
 if not ok or alpha_bal is None or alpha_bal <= 1: raise SystemExit(f'alpha sender not funded: {alpha_bal}')
 ok, beta_public_before, beta_public_get_output = wallet_get(BETA_PUBLIC, WALLET_HOME)
 if not ok or beta_public_before is None:
@@ -70,7 +70,7 @@ if not ok or beta_public_before is None:
       'failed_command': 'wallet account get --account-id ' + BETA_PUBLIC,
       'failure_excerpt': beta_public_get_output[-4000:],
       'a2a_task_completed': False,
-      'required_to_close': 'Initialize a fresh public recipient on current testnet, then rerun paid A2A; after that the remaining known blocker is rc3 private-send proof panic.',
+      'required_to_close': 'Initialize a fresh public recipient on current testnet, then rerun paid A2A.',
     }
     (BASE/'paid_a2a_live_blocker.json').write_text(json.dumps(blocker, indent=2))
     doc=DOCS/'paid-a2a-live-evidence.md'
@@ -86,21 +86,6 @@ This is not accepted as strict paid-A2A completion; it is retained as fail-close
 '''.format(blocker_path=BASE/'paid_a2a_live_blocker.json'))
     print('PAID_A2A_BLOCKED recipient_not_initialized raw=' + str(BASE/'paid_a2a_live_blocker.json'))
     raise SystemExit(2)
-ok, beta_private_bal, beta_private_get_output = wallet_get(BETA_PRIVATE, WALLET_HOME)
-if not ok or beta_private_bal is None or beta_private_bal <= 0:
-    blocker={
-      'ok': False,
-      'blocked': True,
-      'blocker': 'paid A2A seller private identity is not funded/readable on current public LEZ testnet',
-      'failed_command': 'wallet account get --account-id ' + BETA_PRIVATE,
-      'failure_excerpt': beta_private_get_output[-4000:],
-      'a2a_task_completed': False,
-      'required_to_close': 'Initialize/fund seller identity on current testnet, then rerun paid A2A.',
-    }
-    (BASE/'paid_a2a_live_blocker.json').write_text(json.dumps(blocker, indent=2))
-    print('PAID_A2A_BLOCKED seller_identity_not_funded raw=' + str(BASE/'paid_a2a_live_blocker.json'))
-    raise SystemExit(2)
-
 session=BASE/'logoscore-session'; config=session/'config'; persist=session/'persist'; agent_state=BASE/'agent-state'
 config.mkdir(parents=True); persist.mkdir(parents=True); agent_state.mkdir(parents=True)
 shutil.copytree(WALLET_HOME, agent_state/'wallet')
@@ -110,7 +95,7 @@ shutil.copytree(WALLET_HOME, agent_state/'wallet')
   'description':'LP-0008 strict paid A2A buyer agent',
   'task_topic':'/lp0008/1/alpha-storage/tasks',
   'owner_topic':'/lp0008/1/alpha-storage/owner',
-  'wallet_account_hex':raw(ALPHA_PRIVATE),
+  'wallet_account_hex':raw(ALPHA_ACCOUNT),
   'sequencer_addr':'https://testnet.lez.logos.co/',
   'per_tx_limit':'1000',
   'per_period_limit':'10000',
@@ -156,7 +141,7 @@ try:
       'description':'LP-0008 strict paid A2A buyer agent',
       'task_topic':'/lp0008/1/alpha-storage/tasks',
       'owner_topic':'/lp0008/1/alpha-storage/owner',
-      'wallet_account_hex':raw(ALPHA_PRIVATE),
+      'wallet_account_hex':raw(ALPHA_ACCOUNT),
       'sequencer_addr':'https://testnet.lez.logos.co/',
       'per_tx_limit':'1000',
       'per_period_limit':'10000',
@@ -178,7 +163,7 @@ try:
 
     # Publish seller card first, then restore buyer config.
     for key,val in [
-      ('agent_id','beta-messaging'),('agent_name','Beta Seller Agent'),('description','LP-0008 strict paid A2A seller agent'),
+      ('agent_id',BETA_AGENT_ID),('agent_name','Beta Seller Agent'),('description','LP-0008 strict paid A2A seller agent'),
       ('task_topic','/lp0008/1/beta-messaging/tasks'),('owner_topic','/lp0008/1/beta-messaging/owner'),
       ('a2a_payment_recipient',raw(BETA_PUBLIC)),('a2a_payment_amount_le16',AMOUNT)]:
         cli_cmd(f'config-beta-{key}', ['call','agent_module','dispatchSkill','meta.configure', json.dumps([key,val])])
@@ -187,14 +172,14 @@ try:
     for key,val in [
       ('agent_id','gamma-chain'),('agent_name','Gamma Buyer Agent'),('description','LP-0008 strict paid A2A buyer agent'),
       ('task_topic','/lp0008/1/alpha-storage/tasks'),('owner_topic','/lp0008/1/alpha-storage/owner'),
-      ('wallet_account_hex',raw(ALPHA_PRIVATE)),('a2a_payment_recipient',raw(BETA_PUBLIC)),('a2a_payment_amount_le16','0')]:
+      ('wallet_account_hex',raw(ALPHA_ACCOUNT)),('a2a_payment_recipient',raw(BETA_PUBLIC)),('a2a_payment_amount_le16','0')]:
         cli_cmd(f'config-alpha-{key}', ['call','agent_module','dispatchSkill','meta.configure', json.dumps([key,val])])
     cli_cmd('alpha-agent-card',['call','agent_module','dispatchSkill','agent.card','[]'])
     cli_cmd('alpha-wallet-balance',['call','agent_module','dispatchSkill','wallet.balance','[]'])
     alpha_balance=parse_cli_result('alpha-wallet-balance')
-    if alpha_balance.get('mode')!='live' or alpha_balance.get('account')!=raw(ALPHA_PRIVATE): raise AssertionError(alpha_balance)
+    if alpha_balance.get('mode')!='live' or alpha_balance.get('account')!=raw(ALPHA_ACCOUNT): raise AssertionError(alpha_balance)
     params=json.dumps({'recipient':'/lp0008/1/paid-a2a/proof','message':'LP-0008 paid A2A live task execution'})
-    cli_cmd('paid-agent-task',['call','agent_module','dispatchSkill','agent.task', json.dumps(['beta-messaging','messaging.send',params])], check=True)
+    cli_cmd('paid-agent-task',['call','agent_module','dispatchSkill','agent.task', json.dumps([BETA_AGENT_ID,'messaging.send',params])], check=True)
     task=parse_cli_result('paid-agent-task')
     if task.get('status')!='completed': raise AssertionError(task)
     transport=task.get('transport',{}).get('result',{})
@@ -244,10 +229,65 @@ This is not accepted as strict paid-A2A completion; it is retained as fail-close
 '''.format(transport=blocker['a2a_transport_message_id'], result=blocker['a2a_result_message_id'], blocker_path=BASE/'paid_a2a_live_blocker.json'))
         print('PAID_A2A_BLOCKED wallet_payment_failed raw=' + str(BASE/'paid_a2a_live_blocker.json'))
         raise SystemExit(2)
-    text=cp.stdout.strip()
-    if text.startswith('"'): text=json.loads(text)
-    payment=json.loads(text[text.find('{'):])
-    if payment.get('mode')!='live' or payment.get('submitted') is not True or not payment.get('tx_hash'): raise AssertionError({'payment':payment,'task':task})
+    lines=[line.strip() for line in cp.stdout.splitlines() if line.strip()]
+    payment=None
+    for line in reversed(lines):
+        try:
+            candidate=json.loads(line)
+            if isinstance(candidate, str):
+                candidate=json.loads(candidate)
+            if isinstance(candidate, dict) and 'submitted' in candidate:
+                payment=candidate
+                break
+        except Exception:
+            continue
+    if payment is None:
+        blocker={
+          'ok': False,
+          'blocked': True,
+          'blocker': 'wallet.send did not return parseable payment JSON',
+          'failed_command': 'paid-wallet-send-cabi',
+          'returncode': cp.returncode,
+          'failure_excerpt': cp.stdout[-4000:],
+          'a2a_task': task,
+          'a2a_task_completed': task.get('status') == 'completed',
+          'a2a_transport_message_id': task.get('transport',{}).get('result',{}).get('message_id'),
+          'a2a_result_message_id': task.get('result',{}).get('message_id'),
+        }
+        (BASE/'paid_a2a_live_blocker.json').write_text(json.dumps(blocker, indent=2))
+        print('PAID_A2A_BLOCKED payment_json_unparseable raw=' + str(BASE/'paid_a2a_live_blocker.json'))
+        raise SystemExit(2)
+    if payment.get('mode')!='live' or payment.get('submitted') is not True or not payment.get('tx_hash'):
+        blocker={
+          'ok': False,
+          'blocked': True,
+          'blocker': 'wallet.send returned without submitting a live LEZ payment',
+          'failed_command': 'paid-wallet-send-cabi',
+          'returncode': cp.returncode,
+          'payment': payment,
+          'failure_excerpt': cp.stdout[-4000:],
+          'a2a_task': task,
+          'a2a_task_completed': task.get('status') == 'completed',
+          'a2a_transport_message_id': task.get('transport',{}).get('result',{}).get('message_id'),
+          'a2a_result_message_id': task.get('result',{}).get('message_id'),
+          'required_to_close': 'Need a current testnet wallet account that can sign and submit the payment path, or upstream wallet/prover fix.',
+        }
+        (BASE/'paid_a2a_live_blocker.json').write_text(json.dumps(blocker, indent=2))
+        doc=DOCS/'paid-a2a-live-evidence.md'
+        doc.write_text('''# Paid A2A Live Evidence - Blocked at LEZ Payment
+
+The live Logos Messaging A2A task path completed, but the strict payment binding cannot be honestly closed yet.
+
+- A2A task status: completed
+- Transport message id: {transport}
+- Result message id: {result}
+- Blocker: wallet.send returned `{payment}` instead of a submitted live LEZ tx.
+- Raw blocker JSON: `{blocker_path}`
+
+This is not accepted as strict paid-A2A completion; it is retained as fail-closed evidence for the wallet/tooling/testnet blocker.
+'''.format(transport=blocker['a2a_transport_message_id'], result=blocker['a2a_result_message_id'], payment=json.dumps(payment, sort_keys=True), blocker_path=BASE/'paid_a2a_live_blocker.json'))
+        print('PAID_A2A_BLOCKED wallet_payment_not_submitted raw=' + str(BASE/'paid_a2a_live_blocker.json'))
+        raise SystemExit(2)
     tx_hash=payment['tx_hash']
     task['payment']=payment
     task['payment_binding']='wallet.send executed by same agent wallet immediately after completed live A2A task'
@@ -267,8 +307,8 @@ This is not accepted as strict paid-A2A completion; it is retained as fail-close
     summary={
       'schema':'lp0008-paid-a2a-live-v1','repo_sha':run('git-sha',['git','rev-parse','HEAD']).stdout.strip(),
       'state_root':str(BASE),'agent_state':str(active_state),
-      'buyer':{'agent_id':'gamma-chain','wallet_account':ALPHA_PRIVATE,'wallet_account_raw':raw(ALPHA_PRIVATE),'balance_before':alpha_bal},
-      'seller':{'agent_id':'beta-messaging','wallet_account':BETA_PRIVATE,'payment_recipient':BETA_PUBLIC,'payment_recipient_raw':raw(BETA_PUBLIC),'recipient_balance_before':beta_public_before,'recipient_balance_after':beta_public_after},
+      'buyer':{'agent_id':'gamma-chain','wallet_account':ALPHA_ACCOUNT,'wallet_account_raw':raw(ALPHA_ACCOUNT),'balance_before':alpha_bal},
+      'seller':{'agent_id':BETA_AGENT_ID,'payment_recipient':BETA_PUBLIC,'payment_recipient_raw':raw(BETA_PUBLIC),'recipient_balance_before':beta_public_before,'recipient_balance_after':beta_public_after},
       'task_id':task['task_id'],'transport_message_id':transport['message_id'],'result_message_id':result['message_id'],'tx_hash':tx_hash,
       'payment':payment,'task':task,'beta_card':beta_card,
       'assertions':['live Logos Messaging transport emitted A2A task envelope','task completed through agent.task lifecycle','live Logos Messaging executed delegated messaging.send skill','live LEZ wallet payment submitted','on-chain tx hash found','seller payment recipient balance increased']
@@ -277,8 +317,8 @@ This is not accepted as strict paid-A2A completion; it is retained as fail-close
     doc=AGENT/'docs/paid-a2a-live-evidence.md'
     doc.write_text('\n'.join([
       '# LP-0008 paid A2A live evidence','',f'Generated from `{out}`.','',
-      f'- Buyer: gamma-chain `{ALPHA_PRIVATE}`',
-      f'- Seller: beta-messaging `{BETA_PRIVATE}`',
+      f'- Buyer: gamma-chain `{ALPHA_ACCOUNT}`',
+      f'- Seller agent id: `{BETA_AGENT_ID}`',
       f'- Seller payment recipient: `{BETA_PUBLIC}`',
       f'- Task ID: `{task["task_id"]}`',
       f'- A2A transport message ID: `{transport["message_id"]}`',
@@ -287,7 +327,7 @@ This is not accepted as strict paid-A2A completion; it is retained as fail-close
       f'- Seller recipient balance: {beta_public_before} -> {beta_public_after}',
       '', 'This evidence binds one autonomous A2A task to live Logos Messaging and a live LEZ payment transaction. Public account IDs and tx hashes are not private keys.' ,'']))
     manifest=AGENT/'scripts/write_strict_evidence_manifest.py'
-    common=[sys.executable,str(manifest),'add','--status','pass','--script','scripts/run_paid_a2a_live_evidence.py','--artifact',str(out),'--artifact','docs/paid-a2a-live-evidence.md','--tx-hash',tx_hash,'--task-id',task['task_id'],'--message-id',transport['message_id'],'--message-id',result['message_id'],'--wallet-account',ALPHA_PRIVATE,'--wallet-account',BETA_PRIVATE,'--wallet-account',BETA_PUBLIC]
+    common=[sys.executable,str(manifest),'add','--status','pass','--script','scripts/run_paid_a2a_live_evidence.py','--artifact',str(out),'--artifact','docs/paid-a2a-live-evidence.md','--tx-hash',tx_hash,'--task-id',task['task_id'],'--message-id',transport['message_id'],'--message-id',result['message_id'],'--wallet-account',ALPHA_ACCOUNT,'--wallet-account',BETA_PUBLIC]
     for crit,note in [('F5','below-threshold autonomous paid task executed live without owner approval'),('F7','A2A card/task lifecycle used live Logos Messaging transport'),('F8','two agents executed task and transferred LEZ payment autonomously'),('F9','marketplace use-case payment now backed by live task-tied LEZ tx'),('S1','live testnet wallet + messaging paid A2A evidence retained')]:
         subprocess.run(common+['--criterion',crit,'--note',note], cwd=AGENT, check=True)
     print('PAID_A2A_LIVE_OK')

@@ -1,9 +1,9 @@
 # LP-0008 strict live gate inventory
 
-Generated: 20260630_072411 UTC
-Repo SHA: `773812cfa9e5af4e19e7a76c91d1d5d221fabbda`
-Raw log: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260630_072411.log`
-JSON: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260630_072411.json`
+Generated: 20260630_180416 UTC
+Repo SHA: `e2a25ba429656741f22c624a9c2e767e02ec59a7`
+Raw log: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260630_180416.log`
+JSON: `/Users/evinova-self/lp0008-phase0/strict_live_gate_preflight_20260630_180416.json`
 
 Counts: PASS=14 WARN=3 FAIL=0
 
@@ -21,11 +21,11 @@ Counts: PASS=14 WARN=3 FAIL=0
 | PASS | required | basecamp-source-cache | /Users/evinova-self/Library/Caches/logos-scaffold/repos/basecamp |
 | PASS | required | basecamp-module-cache | /Users/evinova-self/Library/Caches/logos-scaffold/basecamp |
 | PASS | required | scaffold.toml | /Users/evinova-self/Projects/logos-basecamp/lp-0008-autonomous-agent/scaffold.toml |
-| PASS | required | wallet-private-account-count | private_accounts=4 public_accounts=5 |
+| PASS | required | wallet-private-account-count | private_accounts=5 public_accounts=6 |
 | WARN | required | wallet-check-health | rc=101; 
-thread 'main' (9864129) panicked at /Users/evinova-self/.cargo/git/checkouts/logos-execution-zone-6bae42d7c9cadfe7/cf3639d/wallet/src/cli/mod.rs:134:13:
+thread 'main' (10614483) panicked at /Users/evinova-self/.cargo/git/checkouts/logos-execution-zone-6bae42d7c9cadfe7/cf3639d/wallet/src/cli/mod.rs:134:13:
 Local ID for authenticated transfer program is different from remote
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace |
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrac |
 | PASS | required | lez-sequencer-reachability | https://testnet.lez.logos.co reachable |
 | WARN | recommended | screen-sharing-vnc | not listening on localhost:5900; needed only for remote GUI recording |
 | WARN | required | github-token | hosts.yml exists but oauth_token not found |
