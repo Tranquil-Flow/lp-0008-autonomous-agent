@@ -24,6 +24,7 @@ EXPECTED_NOT_PLANNED = {
     "SR1": "Met",
     "SR2": "Met",
     "EV1": "Met",
+    "S3": "Met",
 }
 
 EXPECTED_BLOCKED = {

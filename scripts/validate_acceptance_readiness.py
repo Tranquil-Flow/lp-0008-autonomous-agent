@@ -30,6 +30,8 @@ REQUIRED_FILES = [
     "scripts/run_a2a_schema_evidence.py",
     "docs/a2a-schema-evidence.md",
     "docs/a2a-schema-summary-latest.json",
+    "scripts/check_github_ci.py",
+    "docs/ci-evidence.md",
     "docs/final-strict-evidence-gate.md",
     "scripts/record_final_video.sh",
     "docs/final-submission-preflight.md",
@@ -84,6 +86,7 @@ REQUIRED_PHRASES = {
         "headless Logos Core deployment",
         "sidecar skill-extension",
         "fresh-clone reproduction",
+        "scripts/check_github_ci.py",
     ],
     "docs/cu-costs.md": [
         "CU cost and proof-mode notes",
@@ -114,6 +117,19 @@ REQUIRED_PHRASES = {
         "queued",
         "transport_sent",
         "completed",
+    ],
+    "scripts/check_github_ci.py": [
+        "LP0008_CI_OK",
+        "origin_branch_sha",
+        "headSha",
+        "conclusion",
+    ],
+    "docs/ci-evidence.md": [
+        "LP-0008 CI evidence",
+        "origin/main == git rev-parse HEAD",
+        "completed",
+        "success",
+        "Reviewer-facing boundary",
     ],
     "scripts/finalize_after_video.sh": [
         "FINALIZE_OK",
