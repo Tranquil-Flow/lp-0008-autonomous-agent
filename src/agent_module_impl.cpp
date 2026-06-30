@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <fstream>
 #include <filesystem>
+#include <set>
 #include <sstream>
 #include <thread>
 #include <vector>
@@ -402,8 +403,18 @@ std::string AgentModuleImpl::metaConfigure(const std::string& key, const std::st
 
 std::string AgentModuleImpl::storageUpload(const std::string& path, const std::string& label)
 {
+    // Path safety: reject sensitive system paths
+    const auto safePath = agent_persistence::validatePath(path);
+    if (safePath.empty()) {
+        json err;
+        err["error"] = "path_rejected";
+        err["reason"] = "path resolves to a sensitive or blocked system location";
+        err["path"] = path;
+        return err.dump();
+    }
+
     // Read file content
-    std::ifstream ifs(path, std::ios::binary);
+    std::ifstream ifs(safePath, std::ios::binary);
     if (!ifs.is_open()) {
         json err;
         err["error"] = "file_not_found";
@@ -476,6 +487,16 @@ std::string AgentModuleImpl::storageUpload(const std::string& path, const std::s
 
 std::string AgentModuleImpl::storageDownload(const std::string& address, const std::string& path)
 {
+    // Path safety: reject sensitive system paths for download destination
+    const auto safePath = agent_persistence::validatePath(path);
+    if (safePath.empty()) {
+        json err;
+        err["error"] = "path_rejected";
+        err["reason"] = "download destination resolves to a sensitive or blocked system location";
+        err["path"] = path;
+        return err.dump();
+    }
+
     // Find by address in registry
     auto data = agent_persistence::loadJsonFile(agent_persistence::storagePath());
     if (!data.is_object()) data = json::object();
@@ -1226,11 +1247,28 @@ std::string AgentModuleImpl::agentTask(const std::string& agentAddress, const st
     task["status"] = "working";
     appendTaskEvent(task, "working");
 
+    // Security: restrict skills that can be delegated via A2A tasks.
+    // These skills allow reconfiguring the agent or accessing sensitive state
+    // and must not be invocable by a remote peer without owner consent.
+    static const std::set<std::string> a2aRestrictedSkills = {
+        "meta.configure",        // can disable spending gate
+        "meta.status",           // leaks wallet balance / config
+        "wallet.history",        // leaks transaction history
+        "wallet.balance",        // leaks balance
+        "approval.approve",      // can bypass owner approval
+        "approval.reject",       // can interfere with owner controls
+        "approval.list",         // leaks pending approvals
+    };
+
     json result;
     bool failed = false;
     if (skill == "agent.task" || skill == "agent.complete") {
         failed = true;
         result = json{{"error", "unsupported_task_skill"}, {"skill", skill}};
+    } else if (a2aRestrictedSkills.count(skill)) {
+        failed = true;
+        result = json{{"error", "skill_restricted_for_a2a"}, {"skill", skill},
+                       {"reason", "this skill cannot be delegated to a remote agent"}};
     } else {
         const auto args = argsForSkill(skill, params).dump();
         result = parseJsonOrString(dispatchSkill(skill, args));

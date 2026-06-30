@@ -8,7 +8,7 @@ Primary executable gate:
 
 The script writes evidence under:
 
-- `$LP0008_USE_CASE_STATE` if set, otherwise `~/lp0008-phase0/three_use_cases_<timestamp>/`
+- `$LP0008_USE_CASE_STATE` if set, otherwise `$LP0008_TEST_ROOT/three_use_cases_<timestamp>/`
 
 ## Use case 1: personal file vault
 

@@ -25,4 +25,8 @@ std::string configPath();
 nlohmann::json loadJsonFile(const std::string& path);
 void saveJsonFile(const std::string& path, const nlohmann::json& data);
 
+// Path safety: validates a user-supplied file path is within an allowed root.
+// Returns the canonical path if safe, or empty string if rejected.
+std::string validatePath(const std::string& path);
+
 } // namespace agent_persistence

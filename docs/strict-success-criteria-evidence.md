@@ -13,7 +13,7 @@ scripts/run_final_pre_video_evidence.sh
 With a funded rc3 wallet mounted, also export:
 
 ```bash
-export LP0008_LIVE_WALLET_HOME=$HOME/lp0008-phase0/rc3_faucet_wallet
+export LP0008_LIVE_WALLET_HOME=$LP0008_TEST_ROOT/rc3_faucet_wallet
 export LP0008_LIVE_WALLET_ACCOUNT=27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq
 export LP0008_LIVE_SEND_RECIPIENT=yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3
 ```
@@ -27,7 +27,7 @@ Latest full pre-video gate run on the M4 Pro completed with `PRE_VIDEO_EVIDENCE_
 - recipient: `yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3`
 - observed balance: `149 -> 144`
 - `tx_found: true`
-- retained log: `~/lp0008-phase0/final_pre_video_evidence.log`
+- retained log: `$LP0008_TEST_ROOT/final_pre_video_evidence.log`
 
 ## Evidence table
 

@@ -6,7 +6,7 @@ This document maps persistence, fail-closed timeout, and failure-isolation evide
 
 The script writes evidence under:
 
-- `$LP0008_RESILIENCE_STATE` if set, otherwise `~/lp0008-phase0/resilience_<timestamp>/`
+- `$LP0008_RESILIENCE_STATE` if set, otherwise `$LP0008_TEST_ROOT/resilience_<timestamp>/`
 
 ## What the gate proves
 

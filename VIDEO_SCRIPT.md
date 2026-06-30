@@ -137,13 +137,13 @@ Narration cue:
 Preferred on screen:
 
 ```bash
-LP0008_LIVE_WALLET_HOME=~/lp0008-phase0/rc3_faucet_wallet LP0008_LIVE_WALLET_ACCOUNT=27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq LP0008_LIVE_SEND_RECIPIENT=yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3 LP0008_LIVE_WALLET_AMOUNT=1 ./scripts/run_final_pre_video_evidence.sh
+LP0008_LIVE_WALLET_HOME=$LP0008_TEST_ROOT/rc3_faucet_wallet LP0008_LIVE_WALLET_ACCOUNT=27yyLwC5LkFvMUGvnXmmU8qjhKCk1T1jb7r7LFUrAoRq LP0008_LIVE_SEND_RECIPIENT=yT4vNzPFFH4FyG4NH886YChds7EfpEaRaV1jvqZ6Rx3 LP0008_LIVE_WALLET_AMOUNT=1 ./scripts/run_final_pre_video_evidence.sh
 ```
 
 If live wallet send is too slow for the recording, show the retained successful log instead:
 
 ```bash
-tail -80 ~/lp0008-phase0/final_pre_video_evidence.log
+tail -80 $LP0008_TEST_ROOT/final_pre_video_evidence.log
 ```
 
 Narration cue:

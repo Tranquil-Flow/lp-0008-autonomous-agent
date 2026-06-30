@@ -131,7 +131,7 @@ Defaults match the M4 Pro Basecamp workspace. Override paths when needed:
 ```bash
 LOGOSCORE_CLI=/path/to/logoscore \
 LOGOS_BASECAMP_ROOT=/path/to/logos-basecamp \\
-LP0008_TEST_ROOT=$HOME/lp0008-phase0 \
+LP0008_TEST_ROOT=$LP0008_TEST_ROOT \
 scripts/run_logoscore_integration.sh stage-c
 ```
 
@@ -141,7 +141,7 @@ scripts/run_logoscore_integration.sh stage-c
 
 ## Final strict evidence gate
 
-`scripts/run_final_strict_evidence.sh` is the umbrella non-video evidence gate. It writes a SHA-pinned JSON summary plus per-step logs under `~/lp0008-phase0/final_strict_evidence_<timestamp>/`, runs all strict phase scripts, and records known upstream/tooling blockers as `blocked` rather than silently passing them. A manual-only opt-in GitHub workflow is available at `docs/live-strict-evidence.workflow.yml (copy to .github/workflows/live-strict-evidence.yml with workflow-scope token)`.
+`scripts/run_final_strict_evidence.sh` is the umbrella non-video evidence gate. It writes a SHA-pinned JSON summary plus per-step logs under `$LP0008_TEST_ROOT/final_strict_evidence_<timestamp>/`, runs all strict phase scripts, and records known upstream/tooling blockers as `blocked` rather than silently passing them. A manual-only opt-in GitHub workflow is available at `docs/live-strict-evidence.workflow.yml (copy to .github/workflows/live-strict-evidence.yml with workflow-scope token)`.
 
 ## Final pre-video evidence gate
 
