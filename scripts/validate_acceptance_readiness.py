@@ -76,7 +76,7 @@ REQUIRED_PHRASES = {
         "scripts/run_final_pre_video_evidence.sh",
         "Three separate agents",
         "**not** a final acceptance claim",
-        "5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3",
+        "dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73",
     ],
     "docs/submission-readiness-matrix.md": [
         "non-video evidence is closed or explicitly upstream/tooling-blocked",

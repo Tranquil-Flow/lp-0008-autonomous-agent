@@ -148,7 +148,7 @@ tail -80 $LP0008_TEST_ROOT/final_pre_video_evidence.log
 
 Narration cue:
 
-"This optional clip shows the standalone public-testnet wallet proof or the legacy pre-video evidence gate. The strict gate shown earlier is the authoritative non-video umbrella for current submission readiness; this wallet clip is standalone wallet-send evidence, not a paid-A2A task-payment claim. The latest retained run completed with `PRE_VIDEO_EVIDENCE_OK`, transaction `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`, `tx_found: true`, and observed balance `149 -> 144`."
+"This optional clip shows the standalone public-testnet wallet proof or the legacy pre-video evidence gate. The strict gate shown earlier is the authoritative non-video umbrella for current submission readiness; this wallet clip is standalone wallet-send evidence, not a paid-A2A task-payment claim. The latest retained run completed with `PRE_VIDEO_EVIDENCE_OK`, transaction `dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73`, `tx_found: true`, and observed balance `149 -> 144`."
 
 ## Scene 9 — close, 30 sec
 

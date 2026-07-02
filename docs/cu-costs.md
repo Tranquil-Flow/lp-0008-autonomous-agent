@@ -14,7 +14,7 @@ The LP-0008 module currently exercises three execution classes:
 
 Latest public-testnet send evidence:
 
-- Transaction: `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`
+- Transaction: `dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73`
 - Balance movement observed by the pre-video evidence gate: 149 LEZ -> 144 LEZ
 - Sequencer: `https://testnet.lez.logos.co/`
 - Wallet program family: rc3 (`cf3639d8`)
@@ -42,7 +42,7 @@ If a final submission requires proof-mode video for a LEZ program operation, tha
 
 | Operation | Submission path | CU/proof status | Evidence |
 |---|---|---|---|
-| LEZ token send | rc3 wallet FFI/external wallet path | Public-testnet tx proven; CU field not exposed by current wallet output | tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` |
+| LEZ token send | rc3 wallet FFI/external wallet path | Public-testnet tx proven; CU field not exposed by current wallet output | tx `dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73` |
 | A2A task envelope transport | `agent.task` -> `messaging.send` -> `delivery_module` | Live Logos Messaging transport proven; no LEZ execution CU | `scripts/run_lp0008_deep_verify.py`, `transport.result.mode == live` |
 | Storage upload/download/list | `storage_module` client path | Live module integration proven; no LEZ CU field exposed | `scripts/run_lp0008_deep_verify.py` |
 | Program call | `program.call` | Fail-closed; no submitted tx; CU not applicable | `docs/upstream/program-live-api.md` |

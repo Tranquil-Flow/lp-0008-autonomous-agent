@@ -140,5 +140,17 @@
   "repo": "Tranquil-Flow/lp-0008-autonomous-agent",
   "repo_sha": "c74a8ecc72c26e626230d7471b59f8796a3fad10",
   "schema": "lp0008-strict-evidence-manifest-v1",
-  "updated_at": "2026-06-30T19:27:25.371030+00:00"
+  "updated_at": "2026-06-30T19:27:25.371030+00:00",
+  "testnet_fresh_evidence": {
+    "file": "evidence/strict-latest/testnet-fresh-evidence.json",
+    "generated_at": "2026-07-02T17:45:00Z",
+    "tx_count": 4,
+    "tx_hashes": [
+      "9824a613e1f82e973db93bd6d26033edd9c53ef22899ce9f357e6f7f9eafdf87",
+      "6db5031d177694cb13657a51e15914a8a73881e6e37e54428dcda48cf5d03964",
+      "dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73",
+      "a6f0725cf52a04e6f20963ea0f25541b97b17fa945de0a7f0ebd58e94f2f37c6"
+    ],
+    "all_verified_on_chain": true
+  }
 }

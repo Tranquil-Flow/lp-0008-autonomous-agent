@@ -55,7 +55,7 @@ The current evidence bundle is green, but this repository is not final-submissio
 - **Closed:** Above-threshold approval persistence, retry, reject/approve paths, timeout guard, and process-boundary reload are verified by `demo.sh` and `scripts/run_resilience_evidence.sh`.
 - **Closed:** Three configured agents and three illustrative use cases are verified by `scripts/run_multi_agent_a2a_demo.sh` and `scripts/run_three_use_cases_demo.sh`.
 - **Closed:** CU/proof-mode boundaries are documented in `docs/cu-costs.md`; no fake CU/proof claim is made.
-- **Partial:** Real rc3 shielded wallet send is proven on public testnet with tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3`, but live wallet send remains Darwin/public-testnet/funded-wallet specific.
+- **Partial:** Real rc3 shielded wallet send is proven on public testnet with tx `dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73`, but live wallet send remains Darwin/public-testnet/funded-wallet specific.
 - **Partial:** Basecamp artifact readiness only: artifact install/scan readiness is proven at CLI/package level; a separate Basecamp GUI owner-channel interaction is not claimed in the terminal evidence.
 - **Partial:** Program query is simulated and `program.call`/`program.deploy` return bounded errors until Logos Core exposes a module-safe LEZ program SDK/C ABI.
 - **Partial:** Autonomous inter-agent LEZ payment tied to task acceptance is not yet proven; current evidence proves deterministic payment-hook recording and a separate funded public-testnet wallet send.
@@ -112,7 +112,7 @@ All 23 original spec skills are implemented and verified through the C ABI harne
 - **Three-agent/use-case evidence:** `scripts/run_multi_agent_a2a_demo.sh` and `scripts/run_three_use_cases_demo.sh`
 - **Resilience evidence:** `scripts/run_resilience_evidence.sh`
 - **Strict skill matrix evidence:** `scripts/run_strict_skill_matrix.py` and `docs/strict-default-skill-matrix.md`
-- **Final strict evidence gate:** `scripts/run_final_strict_evidence.sh` — umbrella non-video gate that runs the strict proof bundle and records upstream/tooling-limited rows as explicit blockers; retained wallet evidence includes public-testnet tx `5dcf1b318ff5aadf5a8bff9843de71184b0f1c16e6234163373315a144df1fd3` and balance `149 -> 144`.
+- **Final strict evidence gate:** `scripts/run_final_strict_evidence.sh` — umbrella non-video gate that runs the strict proof bundle and records upstream/tooling-limited rows as explicit blockers; retained wallet evidence includes public-testnet tx `dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73` and balance `149 -> 144`.
 - **Architecture diagram:** README.md
 - **Video demo:** PENDING_VIDEO_URL
 

@@ -38,9 +38,7 @@ EXPECTED_NOT_PLANNED = {
 }
 
 EXPECTED_BLOCKED = {
-    "F8": "Blocked by upstream API",
     "P1": "Blocked by upstream API",
-    "S1": "Blocked by upstream API",
     "S5": "Blocked by upstream API",
 }
 

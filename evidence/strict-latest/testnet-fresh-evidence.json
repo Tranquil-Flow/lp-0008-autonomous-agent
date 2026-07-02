@@ -1,0 +1,52 @@
+{
+  "generated_at": "2026-07-02T17:45:00Z",
+  "sequencer_url": "https://testnet.lez.logos.co/",
+  "lez_version": "v0.2.0 (commit a58fbce2)",
+  "block_at_evidence": 3172,
+  "rpc_verification_method": "POST getTransaction with params [\"hash\"] \u2014 all 4 txs return non-null result",
+  "wallet_binary": "lez-core-v0.2.0 release build from commit a58fbce2ff48c58b7bb5001b1a27e64b9596ee3a",
+  "accounts": {
+    "agent_operational": {
+      "id": "Public/GRzYn3RyRveH4uLKbTnfoDRzaZecMFpWrFfgXVDaKRy",
+      "balance": 148,
+      "nonce": 3,
+      "label": "Fresh account created and initialized on current testnet"
+    },
+    "agent_funded": {
+      "id": "Public/7wHg9sbJwc6h3NP1S9bekfAzB8CHifEcxKswCKUt3YQo",
+      "balance": 20154,
+      "nonce": 2,
+      "label": "Pre-existing funded account (receiver)"
+    }
+  },
+  "transactions": {
+    "init": {
+      "hash": "9824a613e1f82e973db93bd6d26033edd9c53ef22899ce9f357e6f7f9eafdf87",
+      "type": "auth-transfer init (account registration)",
+      "account": "Public/GRzYn3RyRveH4uLKbTnfoDRzaZecMFpWrFfgXVDaKRy"
+    },
+    "funding": {
+      "hash": "6db5031d177694cb13657a51e15914a8a73881e6e37e54428dcda48cf5d03964",
+      "type": "pinata claim (faucet funding)",
+      "account": "Public/GRzYn3RyRveH4uLKbTnfoDRzaZecMFpWrFfgXVDaKRy"
+    },
+    "send": {
+      "hash": "dcb41d4c4a579541b591194f5701eed78762e8934a11f5a48f6fff607a974c73",
+      "type": "wallet.send (auth-transfer send 1 LEZ)",
+      "from": "Public/GRzYn3RyRveH4uLKbTnfoDRzaZecMFpWrFfgXVDaKRy",
+      "to": "Public/7wHg9sbJwc6h3NP1S9bekfAzB8CHifEcxKswCKUt3YQo"
+    },
+    "a2a_payment": {
+      "hash": "a6f0725cf52a04e6f20963ea0f25541b97b17fa945de0a7f0ebd58e94f2f37c6",
+      "type": "wallet.send (A2A payment leg, 1 LEZ)",
+      "from": "Public/GRzYn3RyRveH4uLKbTnfoDRzaZecMFpWrFfgXVDaKRy",
+      "to": "Public/7wHg9sbJwc6h3NP1S9bekfAzB8CHifEcxKswCKUt3YQo"
+    }
+  },
+  "deploy": {
+    "status": "submitted_exit_0",
+    "binary": "time_locked_transfer (350,440 bytes, ELF 32-bit LSB RISC-V)",
+    "note": "deploy-program exited 0 but did not print tx hash (known wallet issue). Transaction was submitted to sequencer."
+  },
+  "verification_command": "curl -s -X POST https://testnet.lez.logos.co/ -H \"Content-Type: application/json\" -d '{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"getTransaction\",\"params\":[\"<HASH>\"]}'"
+}
